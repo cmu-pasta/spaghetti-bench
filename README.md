@@ -46,8 +46,8 @@ export LLM_API_KEY="your-api-key"
 
 ```bash
 cd src/concurrency_bench
-uv run python src/concurrency_bench/run_agent.py \
-  --tasks-file src/concurrency_bench/example.jsonl \
+uv run python run_agent.py \
+  --tasks-file example.jsonl \
   --task-type fix_bug \
   --model-id bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0
 ```
