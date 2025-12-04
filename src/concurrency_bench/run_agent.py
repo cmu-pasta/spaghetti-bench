@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Script to run concurrency benchmark agents on tasks."""
 
+import os
 import argparse
 import json
 import shutil
 import tempfile
 from pathlib import Path
+import traceback
 
 from concurrency_bench.agents import FixBugAgent, TriggerBugAgent
 from concurrency_bench.tasks.fix_bug import FixBugTask
 from concurrency_bench.tasks.trigger_bug import TriggerBugTask
+from concurrency_bench.tasks import loaders
 
 
 def load_tasks(tasks_file: Path) -> list[dict]:
@@ -41,7 +44,7 @@ def setup_workdir(task: dict, base_path: Path) -> Path:
         Path to the temporary working directory.
     """
     # Create temporary directory
-    temp_dir = Path(tempfile.mkdtemp(prefix=f"concurrency_bench_{task['instance_id']}_"))
+    temp_dir = Path(tempfile.mkdtemp(prefix=f"concurrency_bench_{task['instance_id']}_", dir=base_path / "workspaces"))
 
     # Resolve the source path
     source_path = base_path / task['path']
@@ -91,17 +94,27 @@ def run_task(
     # Setup workdir
     workdir = setup_workdir(task, base_path)
 
+    # Initialize task loader based on task["loader"] field
+    loader_name = task.get("loader")
+    if loader_name:
+        loader_class = getattr(loaders, loader_name, None)
+        if loader_class is None:
+            raise ValueError(f"Unknown loader: {loader_name}")
+        task_loader = loader_class(task_name=task.get("task_name", task["instance_id"]))
+    else:
+        task_loader = None
+
     try:
         # Initialize task
         if task_type == "fix_bug":
-            task_obj = FixBugTask(workdir=workdir)
+            task_obj = FixBugTask(workdir=workdir, loader=task_loader)
             agent = FixBugAgent(
                 workdir=workdir,
                 model_id=model_id,
                 api_key=api_key,
             )
         elif task_type == "trigger_bug":
-            task_obj = TriggerBugTask(workdir=workdir)
+            task_obj = TriggerBugTask(workdir=workdir, loader=task_loader)
             agent = TriggerBugAgent(
                 workdir=workdir,
                 model_id=model_id,
@@ -209,6 +222,8 @@ def main():
                 "success": result.success,
             })
         except Exception as e:
+            tb = traceback.format_exc()
+            print(tb)
             print(f"Error running task {task['instance_id']}: {e}")
             results.append({
                 "instance_id": task["instance_id"],

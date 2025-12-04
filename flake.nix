@@ -124,6 +124,7 @@
                 pkgs.javaPackages.compiler.openjdk25
                 pkgs.coreutils
                 pkgs.bash
+                pkgs.tmux
                 repoSource
               ];
               pathsToLink = [

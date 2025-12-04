@@ -1,5 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.chess;
-
 // Translated from: https://github.com/mc-imperial/sctbench/blob/master/benchmarks/chess/WorkStealQueue.cpp
 
 import java.util.concurrent.atomic.AtomicLong;

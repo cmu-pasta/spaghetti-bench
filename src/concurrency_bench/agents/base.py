@@ -4,7 +4,6 @@ import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from openhands.sdk import Agent, LLM, Conversation
-from openhands.tools.preset.default import get_default_tools
 
 
 class ConcurrencyAgent(ABC):
@@ -45,9 +44,18 @@ class ConcurrencyAgent(ABC):
         Returns:
             list: List of tools for the agent.
         """
+        from openhands.sdk.tool import Tool
+        from openhands.tools.file_editor import FileEditorTool
+        from openhands.tools.task_tracker import TaskTrackerTool
+        from openhands.tools.terminal import TerminalTool
+
         # Use default tools: Terminal, FileEditor, TaskTracker
-        # Disable browser as it's typically not needed for concurrency tasks
-        return get_default_tools(enable_browser=False)
+        # Configure Terminal with subprocess type for concurrency tasks
+        return [
+            Tool(name=TerminalTool.name, params={"terminal_type": "subprocess"}),
+            Tool(name=FileEditorTool.name),
+            Tool(name=TaskTrackerTool.name),
+        ]
 
     def initialize_agent(self) -> Agent:
         llm = LLM(

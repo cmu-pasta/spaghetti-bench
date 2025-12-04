@@ -1,5 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cb;
-
 /**
  * Translated from:
  * https://github.com/mc-imperial/sctbench/tree/master/benchmarks/conc-bugs/stringbuffer-jdk1.4
