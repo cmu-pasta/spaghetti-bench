@@ -83,6 +83,7 @@
             packages = [
               virtualenv
               pkgs.uv
+              pkgs.javaPackages.compiler.openjdk25
             ];
             env = {
               UV_NO_SYNC = "1";
@@ -97,8 +98,51 @@
         }
       );
 
-      packages = forAllSystems (system: {
-        default = pythonSets.${system}.mkVirtualEnv "env" workspace.deps.default;
-      });
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          pythonSet = pythonSets.${system}.overrideScope editableOverlay;
+          virtualenv = pythonSet.mkVirtualEnv "dev-env" workspace.deps.all;
+
+          repoSource = pkgs.runCommand "concurrency-bench-src" { } ''
+            mkdir -p $out/workspace
+            cp -r ${./.}/* $out/workspace/
+          '';
+        in
+        {
+          default = pythonSets.${system}.mkVirtualEnv "env" workspace.deps.default;
+
+          dockerImage = pkgs.dockerTools.buildImage {
+            name = "concurrency-bench";
+            tag = "latest";
+
+            copyToRoot = pkgs.buildEnv {
+              name = "image-root";
+              paths = [
+                virtualenv
+                pkgs.javaPackages.compiler.openjdk25
+                pkgs.coreutils
+                pkgs.bash
+                repoSource
+              ];
+              pathsToLink = [
+                "/bin"
+                "/workspace"
+              ];
+            };
+
+            config = {
+              Cmd = [ "${pkgs.bash}/bin/bash" ];
+              WorkingDir = "/workspace";
+              Env = [
+                "PATH=/bin"
+                "JAVA_HOME=${pkgs.javaPackages.compiler.openjdk25}"
+                "REPO_ROOT=/workspace"
+              ];
+            };
+          };
+        }
+      );
     };
 }
