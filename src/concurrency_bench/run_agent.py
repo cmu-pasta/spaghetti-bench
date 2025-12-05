@@ -44,10 +44,15 @@ def setup_workdir(task: dict, base_path: Path) -> Path:
         Path to the temporary working directory.
     """
     # Create temporary directory
-    temp_dir = Path(tempfile.mkdtemp(prefix=f"concurrency_bench_{task['instance_id']}_", dir=base_path / "workspaces"))
+    temp_dir = Path(
+        tempfile.mkdtemp(
+            prefix=f"concurrency_bench_{task['instance_id']}_",
+            dir=base_path / "workspaces",
+        )
+    )
 
     # Resolve the source path
-    source_path = base_path / task['path']
+    source_path = base_path / task["path"]
 
     if not source_path.exists():
         raise FileNotFoundError(f"Source path does not exist: {source_path}")
@@ -72,7 +77,6 @@ def run_task(
     model_id: str,
     base_path: Path,
     api_key: str | None = None,
-    base_url: str | None = None,
 ):
     """Run a single task with the specified agent.
 
@@ -217,19 +221,23 @@ def main():
                 api_key=args.api_key,
                 base_url=args.base_url,
             )
-            results.append({
-                "instance_id": task["instance_id"],
-                "success": result.success,
-            })
+            results.append(
+                {
+                    "instance_id": task["instance_id"],
+                    "success": result.success,
+                }
+            )
         except Exception as e:
             tb = traceback.format_exc()
             print(tb)
             print(f"Error running task {task['instance_id']}: {e}")
-            results.append({
-                "instance_id": task["instance_id"],
-                "success": False,
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "instance_id": task["instance_id"],
+                    "success": False,
+                    "error": str(e),
+                }
+            )
 
     # Print summary
     print(f"\n{'='*80}")

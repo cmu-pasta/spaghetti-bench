@@ -21,6 +21,11 @@
       inputs.uv2nix.follows = "uv2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    fray = {
+      url = "github:cmu-pasta/fray";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -29,6 +34,7 @@
       pyproject-nix,
       uv2nix,
       pyproject-build-systems,
+      fray,
       ...
     }:
     let
@@ -126,6 +132,7 @@
                 pkgs.bash
                 pkgs.tmux
                 repoSource
+                fray.packages.${system}.default
               ];
               pathsToLink = [
                 "/bin"

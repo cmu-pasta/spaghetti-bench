@@ -10,4 +10,3 @@ class TaskLoader:
 
     def run(self, workdir: Path) -> tuple[str, bool]:
         pass
-
