@@ -13,6 +13,7 @@ class TriggerBugTask(ConcurrencyTask):
         Returns:
             TaskOutput: Result indicating if the bug was triggered.
         """
+        self._loader.build(self._workdir)
         [output, result] = self._loader.run(self._workdir)
         print("The output of the bug-triggering run:")
         print(output)

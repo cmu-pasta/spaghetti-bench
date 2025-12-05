@@ -8,4 +8,4 @@ class SCTBenchLoader(TaskLoader):
 
     def run(self, workdir: Path) -> tuple[str, bool]:
         result = run(["java", "-ea", "-cp", ".", f"{self._task_name}"], cwd=workdir, capture_output=True, text=True, check=False)
-        return result.stdout, result.returncode == 0
+        return result.stdout + result.stderr, result.returncode == 0
