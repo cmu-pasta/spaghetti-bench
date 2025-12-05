@@ -141,7 +141,7 @@ def run_task(
     finally:
         # Cleanup temporary directory
         print(f"\nCleaning up workdir: {workdir}")
-        # shutil.rmtree(workdir, ignore_errors=True)
+        shutil.rmtree(workdir, ignore_errors=True)
 
 
 def main():

@@ -5,7 +5,10 @@ class TriggerBugTask(ConcurrencyTask):
     def setup(self):
         """Set up the environment for the trigger bug task."""
         self._loader.build(self._workdir)
-        assert self._loader.run(self._workdir)[1]
+        run_result = self._loader.run(self._workdir)
+        print("The output of the setup run:")
+        print(run_result[0])
+        assert run_result[1], "Setup failed: could not run the task."
 
     def verify(self) -> TaskOutput:
         """Verify that the concurrency bug was successfully triggered.
