@@ -86,7 +86,6 @@ def run_task(
         model_id: Model ID to use for the agent.
         base_path: Base path to resolve relative paths from.
         api_key: Optional API key for the LLM.
-        base_url: Optional base URL for the LLM.
     """
     print(f"\n{'='*80}")
     print(f"Running task: {task['instance_id']}")
@@ -184,11 +183,6 @@ def main():
         help="API key for the LLM provider (defaults to LLM_API_KEY env var)",
     )
     parser.add_argument(
-        "--base-url",
-        type=str,
-        help="Base URL for the LLM provider (defaults to LLM_BASE_URL env var)",
-    )
-    parser.add_argument(
         "--instance-id",
         type=str,
         help="Run only the task with this instance_id",
@@ -219,7 +213,6 @@ def main():
                 model_id=args.model_id,
                 base_path=args.base_path,
                 api_key=args.api_key,
-                base_url=args.base_url,
             )
             results.append(
                 {

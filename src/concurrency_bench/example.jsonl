@@ -1,1 +1,1 @@
-{"instance_id": "Reorder3Bad", "path": "benchmarks/SCTBench/cs/origin/Reorder3Bad.java", "description": "Memory ordering bug with concurrent reads and writes to volatile variables", "benchmark_category": "sctbench", "subcategory": "cs/origin", "loader": "SCTBenchFixLoader"}
+{"instance_id": "Reorder3Bad", "path": "benchmarks/SCTBench/cs/origin/Reorder3Bad.java", "description": "Memory ordering bug with concurrent reads and writes to volatile variables", "benchmark_category": "sctbench", "subcategory": "cs/origin", "loader": "SCTBenchLoader"}

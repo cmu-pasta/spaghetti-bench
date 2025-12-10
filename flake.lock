@@ -41,15 +41,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1764947427,
-        "narHash": "sha256-bg8NXQBor4GYgYOB3VI1jpLtmgFX9cuCdv8/SNHTXqs=",
+        "lastModified": 1764962998,
+        "narHash": "sha256-1tla3Y5vRwBfzTA6sZXCoIh/Fx/PLNZs5WpWLuI1oXs=",
         "owner": "cmu-pasta",
         "repo": "fray",
-        "rev": "ad8a0c8a9d1579153cb874ba8cae536b54548b8b",
+        "rev": "d68e885345b6a66ee44a6a4fe2dc18da4dfcaea4",
         "type": "github"
       },
       "original": {
         "owner": "cmu-pasta",
+        "ref": "fixnix",
         "repo": "fray",
         "type": "github"
       }
