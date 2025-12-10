@@ -34,7 +34,6 @@ class FixBugTask(ConcurrencyTask):
                 ],
             )
         # Original task should fail with Fray
-        print(output)
         assert not passes, "Setup failed: Fray should trigger the original bug."
         return output
 
