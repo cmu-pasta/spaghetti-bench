@@ -129,7 +129,9 @@ def run_task(
             raise ValueError(f"Unknown task type: {task_type}")
 
         # Setup the task
-        task_obj.setup()
+        print("Setting up task...")
+        setup_output = task_obj.setup()
+        print("Setup complete!")
 
         # Run the agent
         print("Starting agent...")
@@ -151,6 +153,8 @@ def run_task(
             "subcategory": task.get("subcategory", ""),
             "conversation_id": str(conversation.id),
             "success": result.success,
+            "setup_output": setup_output,
+            "verify_output": result.verify_output,
             "events": [event.model_dump() for event in conversation.state.events],
         }
 

@@ -2,8 +2,12 @@ from concurrency_bench.tasks.task import ConcurrencyTask, TaskOutput
 
 
 class FixBugTask(ConcurrencyTask):
-    def setup(self):
-        """Set up the environment for the fix bug task."""
+    def setup(self) -> str:
+        """Set up the environment for the fix bug task.
+
+        Returns:
+            str: Combined stdout/stderr from setup.
+        """
         self._loader.build(self._workdir)
         [output, passes] = self._loader.run(
             self._workdir,
@@ -19,6 +23,7 @@ class FixBugTask(ConcurrencyTask):
         )
         # Original task should fail with Fray
         assert not passes, "Setup failed: Fray should trigger the original bug."
+        return output
 
     def verify(self) -> TaskOutput:
         """Verify that the concurrency bug has been fixed.
@@ -41,4 +46,4 @@ class FixBugTask(ConcurrencyTask):
         )
         print("The output of the bug-triggering run:")
         print(output)
-        return TaskOutput(success=passes)
+        return TaskOutput(success=passes, verify_output=output)

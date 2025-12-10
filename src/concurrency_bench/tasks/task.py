@@ -7,6 +7,8 @@ from concurrency_bench.tasks.loaders.task_loader import TaskLoader
 @dataclass
 class TaskOutput:
     success: bool
+    setup_output: str = ""
+    verify_output: str = ""
 
 
 class ConcurrencyTask:
@@ -15,7 +17,8 @@ class ConcurrencyTask:
         self._loader = loader
         pass
 
-    def setup(self):
+    def setup(self) -> str:
+        """Setup the task and return stdout/stderr."""
         pass
 
     def verify(self) -> TaskOutput:
