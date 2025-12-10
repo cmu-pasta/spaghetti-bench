@@ -76,6 +76,7 @@ def run_task(
     task_type: str,
     model_id: str,
     base_path: Path,
+    results_dir: Path,
     api_key: str | None = None,
 ):
     """Run a single task with the specified agent.
@@ -85,6 +86,7 @@ def run_task(
         task_type: Type of task ('fix_bug' or 'trigger_bug').
         model_id: Model ID to use for the agent.
         base_path: Base path to resolve relative paths from.
+        results_dir: Directory to save conversation results.
         api_key: Optional API key for the LLM.
     """
     print(f"\n{'='*80}")
@@ -139,6 +141,27 @@ def run_task(
         result = task_obj.verify()
         print(f"Success: {result.success}")
 
+        # Save conversation data
+        conversation_data = {
+            "instance_id": task["instance_id"],
+            "task_type": task_type,
+            "model_id": model_id,
+            "description": task.get("description", ""),
+            "benchmark_category": task.get("benchmark_category", ""),
+            "subcategory": task.get("subcategory", ""),
+            "conversation_id": str(conversation.id),
+            "success": result.success,
+            "events": [event.model_dump() for event in conversation.state.events],
+        }
+
+        # Write to results directory with structure: results_dir/task_type/benchmark_category/instance_id.json
+        task_results_dir = results_dir / task_type / task.get("benchmark_category", "unknown")
+        task_results_dir.mkdir(parents=True, exist_ok=True)
+        result_file = task_results_dir / f"{task['instance_id']}.json"
+        with open(result_file, "w") as f:
+            json.dump(conversation_data, f, indent=2)
+        print(f"Saved conversation to: {result_file}")
+
         return result
 
     finally:
@@ -187,6 +210,12 @@ def main():
         type=str,
         help="Run only the task with this instance_id",
     )
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=Path("results"),
+        help="Directory to save conversation results (default: results/)",
+    )
 
     args = parser.parse_args()
 
@@ -212,6 +241,7 @@ def main():
                 task_type=args.task_type,
                 model_id=args.model_id,
                 base_path=args.base_path,
+                results_dir=args.results_dir,
                 api_key=args.api_key,
             )
             results.append(

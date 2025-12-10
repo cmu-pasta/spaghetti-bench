@@ -4,6 +4,10 @@ import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 from openhands.sdk import Agent, LLM, Conversation
+from openhands.sdk.tool import Tool
+from openhands.tools.file_editor import FileEditorTool
+from openhands.tools.task_tracker import TaskTrackerTool
+from openhands.tools.terminal import TerminalTool
 
 
 class ConcurrencyAgent(ABC):
@@ -44,13 +48,7 @@ class ConcurrencyAgent(ABC):
         Returns:
             list: List of tools for the agent.
         """
-        from openhands.sdk.tool import Tool
-        from openhands.tools.file_editor import FileEditorTool
-        from openhands.tools.task_tracker import TaskTrackerTool
-        from openhands.tools.terminal import TerminalTool
 
-        # Use default tools: Terminal, FileEditor, TaskTracker
-        # Configure Terminal with subprocess type for concurrency tasks
         return [
             Tool(name=TerminalTool.name, params={"terminal_type": "subprocess"}),
             Tool(name=FileEditorTool.name),

@@ -131,6 +131,12 @@
                 pkgs.coreutils
                 pkgs.bash
                 pkgs.tmux
+                pkgs.findutils
+                pkgs.gnugrep
+                pkgs.gnused
+                pkgs.gawk
+                pkgs.which
+                pkgs.git
                 repoSource
                 fray.packages.${system}.default
               ];

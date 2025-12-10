@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List, Optional
 
 
 class TaskLoader:
@@ -8,5 +9,7 @@ class TaskLoader:
     def build(self, workdir: Path):
         pass
 
-    def run(self, workdir: Path) -> tuple[str, bool]:
+    def run(
+        self, workdir: Path, run_command: Optional[List[str]] = None
+    ) -> tuple[str, bool]:
         pass
