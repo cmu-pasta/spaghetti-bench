@@ -1,0 +1,23 @@
+diff --git a/build.gradle b/build.gradle
+index 3c202567b0..ee80f12668 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -2390,6 +2402,18 @@ project(':streams') {
+     dependsOn testJar
+   }
+
++  tasks.create(name: "copyDependencies", type: Copy) {
++    from (configurations.testRuntimeClasspath) {
++      include('*.jar')
++    }
++    into "$buildDir/dependency"
++    //By default gradle does not handle test dependencies between the sub-projects
++    //This line is to include clients project test jar to dependant-testlibs
++    from (project(':clients').testJar ) { "$buildDir/dependant-testlibs" }
++    duplicatesStrategy 'exclude'
++  }
++
++
+   task genStreamsConfigDocs(type: JavaExec) {
+     classpath = sourceSets.main.runtimeClasspath
+     mainClass = 'org.apache.kafka.streams.StreamsConfig'

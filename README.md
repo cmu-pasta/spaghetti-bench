@@ -213,6 +213,26 @@ All SCTBench tasks use the `SCTBenchLoader` which:
 2. Runs with `java -ea` (assertions enabled)
 3. Reports success based on exit code
 
+### Real-World Projects
+
+The repository also includes tasks from real-world open-source projects (Kafka, Lucene, Guava). These tasks:
+
+- Clone the full repository at a specific commit containing the bug
+- Build the project using its native build system (Gradle/Maven)
+- Run JUnit tests with Fray to detect concurrency bugs
+- Give agents access to the entire codebase for fixing
+
+Real-world tasks use specialized loaders (`KafkaLoader`, `LuceneLoader`, `GuavaLoader`) which:
+1. Clone the repository at the specified commit
+2. Apply necessary patches (e.g., for dependency copying)
+3. Build the project (may take several minutes)
+4. Run tests using Fray with `JUnitRunner` helper
+
+Example task entry:
+```jsonl
+{"instance_id": "Kafka_KAFKA-18418", "repo_url": "https://github.com/apache/kafka.git", "commit": "3.8.0", "test_class": "org.apache.kafka.streams.KafkaStreamsTest", "test_method": "shouldReturnFalseOnCloseWhenThreadsHaventTerminated", "description": "Race condition in KafkaStreams shutdown...", "benchmark_category": "real-world", "subcategory": "kafka", "loader": "KafkaLoader"}
+```
+
 ### Available Tools
 
 Agents have access to standard development tools in the Docker environment:

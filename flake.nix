@@ -89,7 +89,7 @@
             packages = [
               virtualenv
               pkgs.uv
-              pkgs.javaPackages.compiler.openjdk25
+              pkgs.jdk21
             ];
             env = {
               UV_NO_SYNC = "1";
@@ -111,6 +111,22 @@
           pythonSet = pythonSets.${system}.overrideScope editableOverlay;
           virtualenv = pythonSet.mkVirtualEnv "dev-env" workspace.deps.all;
 
+          # Build JUnitRunner
+          junitRunner = pkgs.stdenv.mkDerivation {
+            name = "junit-runner";
+            src = ./helpers/junit-runner;
+            nativeBuildInputs = [ pkgs.gradle ];
+            buildPhase = ''
+              export GRADLE_USER_HOME=$(mktemp -d)
+              gradle build --no-daemon
+            '';
+            installPhase = ''
+              mkdir -p $out
+              cp -r build/libs $out/
+              cp -r build/dependency $out/
+            '';
+          };
+
           repoSource = pkgs.runCommand "concurrency-bench-src" { } ''
             mkdir -p $out/workspace
             cp -r ${./.}/* $out/workspace/
@@ -123,11 +139,16 @@
             name = "concurrency-bench";
             tag = "latest";
 
+            extraCommands = ''
+              mkdir -p tmp
+              chmod 1777 tmp
+            '';
+
             copyToRoot = pkgs.buildEnv {
               name = "image-root";
               paths = [
                 virtualenv
-                pkgs.javaPackages.compiler.openjdk25
+                pkgs.jdk21
                 pkgs.coreutils
                 pkgs.bash
                 pkgs.tmux
@@ -137,12 +158,16 @@
                 pkgs.gawk
                 pkgs.which
                 pkgs.git
+                pkgs.gradle
+                pkgs.curl
+                pkgs.cacert
                 repoSource
                 fray.packages.${system}.default
               ];
               pathsToLink = [
                 "/bin"
                 "/workspace"
+                "/etc"
               ];
             };
 
@@ -151,8 +176,10 @@
               WorkingDir = "/workspace";
               Env = [
                 "PATH=/bin"
-                "JAVA_HOME=${pkgs.javaPackages.compiler.openjdk25}"
+                "JAVA_HOME=${pkgs.jdk21}"
                 "REPO_ROOT=/workspace"
+                "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
+                "GIT_SSL_CAINFO=/etc/ssl/certs/ca-bundle.crt"
               ];
             };
           };

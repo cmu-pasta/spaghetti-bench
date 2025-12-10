@@ -19,6 +19,7 @@ class ConcurrencyAgent(ABC):
         model_id: str,
         api_key: str | None = None,
         base_url: str | None = None,
+        task_info: dict | None = None,
     ):
         """Initialize the ConcurrencyAgent.
 
@@ -26,10 +27,12 @@ class ConcurrencyAgent(ABC):
             workdir: Working directory for the agent.
             model_id: The model ID to use (e.g., "bedrock/bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0").
             api_key: API key for the LLM provider (defaults to env var).
+            task_info: Optional dictionary with task-specific information (test_class, test_method, etc.).
         """
         self.workdir = workdir
         self.model_id = model_id
         self.api_key = api_key or os.getenv("LLM_API_KEY")
+        self.task_info = task_info or {}
         self.agent = None
 
     @abstractmethod
