@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 from typing import List, Optional
 from subprocess import run, PIPE, STDOUT
 import glob
@@ -113,7 +114,7 @@ class RealWorldJUnitLoader(TaskLoader):
         ]
 
         for k, v in properties.items():
-            command.append(f"-J-D{k}={v}")
+            command.append(f"-D{k}={v}")
 
         command.extend(
             [

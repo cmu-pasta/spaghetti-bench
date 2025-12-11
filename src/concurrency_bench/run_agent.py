@@ -145,6 +145,16 @@ def run_task(
         # Initialize task
         if task_type == "fix_bug":
             task_obj = FixBugTask(workdir=workdir, loader=task_loader)
+
+            # Setup the task to get the stack trace
+            print("Setting up task...")
+            setup_output = task_obj.setup()
+            print("Setup complete!")
+
+            # Add stack trace to task_info if available
+            if task_obj.stack_trace:
+                task_info["stack_trace"] = task_obj.stack_trace
+
             agent = FixBugAgent(
                 workdir=workdir,
                 model_id=model_id,
@@ -153,6 +163,12 @@ def run_task(
             )
         elif task_type == "trigger_bug":
             task_obj = TriggerBugTask(workdir=workdir, loader=task_loader)
+
+            # Setup the task for trigger_bug
+            print("Setting up task...")
+            setup_output = task_obj.setup()
+            print("Setup complete!")
+
             agent = TriggerBugAgent(
                 workdir=workdir,
                 model_id=model_id,
@@ -161,12 +177,6 @@ def run_task(
             )
         else:
             raise ValueError(f"Unknown task type: {task_type}")
-
-        # Setup the task
-        print("Setting up task...")
-        setup_output = task_obj.setup()
-        print("Setup complete!")
-        print(setup_output)
 
         # Run the agent
         print("Starting agent...")
@@ -202,6 +212,29 @@ def run_task(
         with open(result_file, "w") as f:
             json.dump(conversation_data, f, indent=2)
         print(f"Saved conversation to: {result_file}")
+
+        # Save git diff of changes made by the agent
+        import subprocess
+
+        # For real-world projects, diff is in the repo subdirectory
+        git_dir = workdir / "repo" if (workdir / "repo").exists() else workdir
+
+        # Initialize git if needed (for SCTBench)
+        subprocess.run(["git", "init"], cwd=git_dir, capture_output=True)
+        subprocess.run(["git", "add", "-A"], cwd=git_dir, capture_output=True)
+
+        # Generate diff
+        diff_result = subprocess.run(
+            ["git", "diff", "--cached"],
+            cwd=git_dir,
+            capture_output=True,
+            text=True,
+        )
+
+        patch_file = task_results_dir / f"{task['instance_id']}.patch"
+        with open(patch_file, "w") as f:
+            f.write(diff_result.stdout)
+        print(f"Saved patch to: {patch_file}")
 
         return result
 

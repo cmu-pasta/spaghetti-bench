@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.hard;
 
 public class Reorder100Bad {
     private static int iSet = 99;
@@ -6,6 +5,7 @@ public class Reorder100Bad {
 
     private static volatile int a = 0;
     private static volatile int b = 0;
+    private static final Object lock = new Object();
 
     public static void main(String[] args) {
         int i, err;
@@ -47,13 +47,17 @@ public class Reorder100Bad {
     }
 
     private static void setThread() {
-        a = 1;
-        b = -1;
+        synchronized (lock) {
+            a = 1;
+            b = -1;
+        }
     }
 
     private static void checkThread() {
-        if (!((a == 0 && b == 0) || (a == 1 && b == -1))) {
-            assert false;
+        synchronized (lock) {
+            if (!((a == 0 && b == 0) || (a == 1 && b == -1))) {
+                assert false;
+            }
         }
     }
 }

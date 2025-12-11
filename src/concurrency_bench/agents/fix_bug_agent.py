@@ -21,6 +21,27 @@ The test that is failing (nondeterministically) is:
 - Test method: {self.task_info['test_method']}
 
 """
+        # Add file/class information for SCTBench tasks
+        elif "instance_id" in self.task_info:
+            # For SCTBench, the instance_id is the class name (e.g., "Reorder3Bad")
+            class_name = self.task_info['instance_id']
+            prompt += f"""
+The program that has the bug:
+- File: {class_name}.java
+- Main method: {class_name}.main()
+
+"""
+
+        # Add stack trace if available
+        if "stack_trace" in self.task_info:
+            prompt += f"""
+When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stack trace:
+
+```
+{self.task_info['stack_trace']}
+```
+
+"""
 
         prompt += """Look for common concurrency issues such as:
 - Race conditions

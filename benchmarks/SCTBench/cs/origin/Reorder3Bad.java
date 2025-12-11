@@ -6,6 +6,7 @@ public class Reorder3Bad {
 
     private static volatile int a = 0;
     private static volatile int b = 0;
+    private static final Object lock = new Object();
 
     public static void main(String[] args) {
         int i, err;
@@ -49,14 +50,18 @@ public class Reorder3Bad {
     }
 
     private static void setThread() {
-        a = 1;
-        b = -1;
+        synchronized (lock) {
+            a = 1;
+            b = -1;
+        }
     }
 
     private static void checkThread() {
-        if (!((a == 0 && b == 0) || (a == 1 && b == -1))) {
-            System.err.println("Bug found!");
-            assert false;
+        synchronized (lock) {
+            if (!((a == 0 && b == 0) || (a == 1 && b == -1))) {
+                System.err.println("Bug found!");
+                assert false;
+            }
         }
     }
 }
