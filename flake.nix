@@ -23,7 +23,7 @@
     };
 
     fray = {
-      url = "github:cmu-pasta/fray/fixnix";
+      url = "github:cmu-pasta/fray/update";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

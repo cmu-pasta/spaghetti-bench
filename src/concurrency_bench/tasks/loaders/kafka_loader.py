@@ -139,3 +139,9 @@ class KafkaLoader(RealWorldJUnitLoader):
     def get_test_properties(self) -> dict:
         """Kafka tests don't require special properties."""
         return {}
+
+    def get_fray_configs(self) -> List[str]:
+        return [
+            "--iter", "10000", 
+            "--sleep-as-yield"
+        ]

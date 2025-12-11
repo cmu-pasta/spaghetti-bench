@@ -78,6 +78,10 @@ class RealWorldJUnitLoader(TaskLoader):
         """Get JVM properties for running tests. Override in subclasses if needed."""
         return {}
 
+    def get_fray_configs(self) -> List[str]:
+        """Get Fray specific configurations. Override in subclasses if needed."""
+        return []
+
     def run(
         self, workdir: Path, run_command: Optional[List[str]] = None
     ) -> tuple[str, bool]:
@@ -101,11 +105,6 @@ class RealWorldJUnitLoader(TaskLoader):
         # Add ByteBuddy experimental flag to support newer Java versions
         properties["net.bytebuddy.experimental"] = "true"
 
-        system_props_str = ""
-        if properties:
-            props_list = [f"-D{k}={v}" for k, v in properties.items()]
-            system_props_str = " ".join(props_list)
-
         # Build command: fray -cp <classpath> [--system-props "<props>"] org.pastalab.fray.helpers.JUnitRunner <junit_version> <test_class>#<test_method>
         command = [
             "fray",
@@ -113,18 +112,21 @@ class RealWorldJUnitLoader(TaskLoader):
             classpath_str,
         ]
 
-        if system_props_str:
-            command.extend(["--system-props", system_props_str])
+        for k, v in properties.items():
+            command.append(f"-J-D{k}={v}")
 
         command.extend(
             [
-                "--iter",
-                "10000",
                 "org.pastalab.fray.helpers.JUnitRunner",
                 self.junit_version,
                 f"{self.test_class}#{self.test_method}",
             ]
         )
+
+        fray_configs = self.get_fray_configs()
+        if fray_configs:
+            command.append("--")
+            command.extend(fray_configs)
 
         print(f"Running Fray with command: {' '.join(command)}")
         result = run(command, cwd=workdir, capture_output=True, text=True, check=False)
