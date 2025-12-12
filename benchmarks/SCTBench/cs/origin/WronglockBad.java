@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/wronglock_bad.c
 
@@ -6,7 +5,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class WronglockBad {
     private static final String USAGE = "./wronglock <param1> <param2>\n";
-    
+
     private static int iNum1 = 1;
     private static int iNum2 = 7;
     private static volatile int dataValue = 0;
@@ -26,8 +25,7 @@ public class WronglockBad {
         int x = dataValue;
         dataValue++;
         if (dataValue != (x+1)) {
-            System.err.println("Bug Found!");
-            assert false; // BAD
+            assert false;
         }
         unlock(dataLock);
     }

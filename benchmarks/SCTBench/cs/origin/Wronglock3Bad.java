@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/wronglock_3_bad.c
 
@@ -58,7 +57,6 @@ public class Wronglock3Bad {
         int x = dataValue;
         dataValue++;
         if (dataValue != (x + 1)) {
-            System.err.println("Bug Found!");
             assert false;
         }
         unlock(dataLock);
@@ -66,7 +64,7 @@ public class Wronglock3Bad {
 
     private static void funcB(int id) {
         lock(thisLock);
-        dataValue++; 
+        dataValue++;
         unlock(thisLock);
     }
 

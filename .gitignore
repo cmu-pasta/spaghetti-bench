@@ -218,3 +218,5 @@ workspaces/
 *.class
 *.jar
 results/
+**/*/.gradle/
+result

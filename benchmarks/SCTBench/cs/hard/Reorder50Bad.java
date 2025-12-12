@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.hard;
 
 public class Reorder50Bad {
     private static int iSet = 49;
@@ -55,7 +54,6 @@ public class Reorder50Bad {
 
     private static void checkThread() {
         if (!((a == 0 && b == 0) || (a == 1 && b == -1))) {
-            System.err.println("Bug found!");
             assert false;
         }
     }

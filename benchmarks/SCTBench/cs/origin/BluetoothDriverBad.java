@@ -1,6 +1,5 @@
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/bluetooth_driver_bad.c
 
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 public class BluetoothDriverBad {
     private static final boolean TRUE = true;

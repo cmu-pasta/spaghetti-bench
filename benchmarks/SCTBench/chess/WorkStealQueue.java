@@ -147,7 +147,7 @@ public class WorkStealQueue<T> {
         }
 
         public void check() {
-            assert (field == 1) : "Bug found!";
+            assert (field == 1);
         }
     }
 

@@ -5,6 +5,7 @@ import os
 import argparse
 import json
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 import traceback
@@ -34,10 +35,10 @@ def load_tasks(tasks_file: Path) -> list[dict]:
 
 
 def setup_workdir(task: dict, base_path: Path) -> Path:
-    """Create a temporary directory and copy the task files.
+    """Create a temporary directory and copy the task files or clone repository.
 
     Args:
-        task: Task dictionary with 'path' field.
+        task: Task dictionary with 'path' field or 'repo_url'/'commit' fields.
         base_path: Base path to resolve relative paths from.
 
     Returns:
@@ -51,7 +52,14 @@ def setup_workdir(task: dict, base_path: Path) -> Path:
         )
     )
 
-    # Resolve the source path
+    print(f"Created workdir: {temp_dir}")
+
+    # For real-world tasks with repo_url, the loader will handle cloning
+    if "repo_url" in task:
+        print(f"Repository will be cloned by loader into: {temp_dir}/repo")
+        return temp_dir
+
+    # For SCTBench-style tasks, copy the file
     source_path = base_path / task["path"]
 
     if not source_path.exists():
@@ -65,7 +73,6 @@ def setup_workdir(task: dict, base_path: Path) -> Path:
         dest_path = temp_dir / source_path.name
         shutil.copy2(source_path, dest_path)
 
-    print(f"Created workdir: {temp_dir}")
     print(f"Copied {source_path} -> {temp_dir}")
 
     return temp_dir
@@ -105,33 +112,92 @@ def run_task(
         loader_class = getattr(loaders, loader_name, None)
         if loader_class is None:
             raise ValueError(f"Unknown loader: {loader_name}")
-        task_loader = loader_class(task_name=task.get("task_name", task["instance_id"]))
+
+        # Real-world loaders (Kafka, Lucene, Guava) need additional parameters
+        if loader_name in ["KafkaLoader", "LuceneLoader", "GuavaLoader"]:
+            task_loader = loader_class(
+                task_name=task.get("task_name", task["instance_id"]),
+                repo_url=task["repo_url"],
+                commit=task["commit"],
+                test_class=task["test_class"],
+                test_method=task["test_method"],
+            )
+        else:
+            # SCTBench and other simple loaders
+            task_loader = loader_class(
+                task_name=task.get("task_name", task["instance_id"])
+            )
     else:
         task_loader = None
 
     try:
+        # Prepare task info for the agent
+        task_info = {
+            "instance_id": task["instance_id"],
+            "description": task.get("description", ""),
+        }
+
+        # Add test-specific info for real-world projects
+        if "test_class" in task:
+            task_info["test_class"] = task["test_class"]
+        if "test_method" in task:
+            task_info["test_method"] = task["test_method"]
+
         # Initialize task
         if task_type == "fix_bug":
             task_obj = FixBugTask(workdir=workdir, loader=task_loader)
+
+            # Setup the task to get the stack trace
+            print("Setting up task...")
+            setup_output = task_obj.setup()
+            print("Setup complete!")
+
+            # Add stack trace to task_info if available
+            if task_obj.stack_trace:
+                task_info["stack_trace"] = task_obj.stack_trace
+
             agent = FixBugAgent(
                 workdir=workdir,
                 model_id=model_id,
                 api_key=api_key,
+                task_info=task_info,
             )
         elif task_type == "trigger_bug":
             task_obj = TriggerBugTask(workdir=workdir, loader=task_loader)
+
+            # Setup the task for trigger_bug
+            print("Setting up task...")
+            setup_output = task_obj.setup()
+            print("Setup complete!")
+
             agent = TriggerBugAgent(
                 workdir=workdir,
                 model_id=model_id,
                 api_key=api_key,
+                task_info=task_info,
             )
         else:
             raise ValueError(f"Unknown task type: {task_type}")
 
-        # Setup the task
-        print("Setting up task...")
-        setup_output = task_obj.setup()
-        print("Setup complete!")
+        # Create a git baseline after setup, before the agent runs
+        git_dir = workdir / "repo" if (workdir / "repo").exists() else workdir
+        subprocess.run(["git", "init"], cwd=git_dir, capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.name", "Concurrency Bench"],
+            cwd=git_dir,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "bench@example.com"],
+            cwd=git_dir,
+            capture_output=True,
+        )
+        subprocess.run(["git", "add", "-A"], cwd=git_dir, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Baseline after setup"],
+            cwd=git_dir,
+            capture_output=True,
+        )
 
         # Run the agent
         print("Starting agent...")
@@ -159,12 +225,31 @@ def run_task(
         }
 
         # Write to results directory with structure: results_dir/task_type/benchmark_category/instance_id.json
-        task_results_dir = results_dir / task_type / task.get("benchmark_category", "unknown")
+        task_results_dir = (
+            results_dir / task_type / task.get("benchmark_category", "unknown")
+        )
         task_results_dir.mkdir(parents=True, exist_ok=True)
         result_file = task_results_dir / f"{task['instance_id']}.json"
         with open(result_file, "w") as f:
             json.dump(conversation_data, f, indent=2)
         print(f"Saved conversation to: {result_file}")
+
+        # Save git diff of changes made by the agent
+        git_dir = workdir / "repo" if (workdir / "repo").exists() else workdir
+        subprocess.run(["git", "add", "-A"], cwd=git_dir, capture_output=True)
+
+        # Generate diff against baseline commit
+        diff_result = subprocess.run(
+            ["git", "diff", "--cached"],
+            cwd=git_dir,
+            capture_output=True,
+            text=True,
+        )
+
+        patch_file = task_results_dir / f"{task['instance_id']}.patch"
+        with open(patch_file, "w") as f:
+            f.write(diff_result.stdout)
+        print(f"Saved patch to: {patch_file}")
 
         return result
 
