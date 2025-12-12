@@ -57,9 +57,14 @@ public class ArithmeticProgBad {
 
       j++;
     }
-    total = total + j;
-    System.out.println("total ...." + total);
-    flag = true;
+    m.lock();
+    try {
+      total = total + j;
+      System.out.println("total ...." + total);
+      flag = true;
+    } finally {
+      m.unlock();
+    }
   }
 
   public static void main(String[] args) {
@@ -79,8 +84,13 @@ public class ArithmeticProgBad {
       e.printStackTrace();
     }
 
-    if (flag) {
-      assert total != ((N * (N + 1)) / 2); // BAD
+    m.lock();
+    try {
+      if (flag) {
+        assert total != ((N * (N + 1)) / 2);
+      }
+    } finally {
+      m.unlock();
     }
   }
 }

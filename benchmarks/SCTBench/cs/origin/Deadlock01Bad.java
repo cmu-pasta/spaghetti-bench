@@ -14,7 +14,7 @@ public class Deadlock01Bad {
             a.unlock();
             throw new RuntimeException("deadlock");
         }
-        b.lock(); /* BAD: deadlock */
+        b.lock();
         try {
             counter++;
         } finally {
@@ -29,7 +29,7 @@ public class Deadlock01Bad {
             b.unlock();
             throw new RuntimeException("deadlock");
         }
-        a.lock(); /* BAD: deadlock */
+        a.lock();
         try {
             counter--;
         } finally {

@@ -39,7 +39,7 @@ public class FsbenchBad {
             }
         }
         assert i >= 0 && i < NUMBLOCKS;
-        locki[i].unlock(); // BAD: array locki upper bound
+        locki[i].unlock();
     }
 
     public static void main(String[] args) {

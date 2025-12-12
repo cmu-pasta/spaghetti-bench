@@ -22,7 +22,7 @@ public class AccountBad {
 
   private static void withdraw() {
     m.lock();
-    try {  
+    try {
       balance = balance - z;
       withdraw_done = true;
     } finally {
@@ -34,9 +34,9 @@ public class AccountBad {
     m.lock();
     try {
       if (deposit_done && withdraw_done)
-        assert balance == (x - y) - z; /* BAD */
+        assert balance == (x - y) - z;
     } finally {
-      m.unlock(); 
+      m.unlock();
     }
   }
 
@@ -49,7 +49,7 @@ public class AccountBad {
     Thread t3 = new Thread(() -> check_result());
     Thread t1 = new Thread(() -> deposit());
     Thread t2 = new Thread(() -> withdraw());
-    
+
     t3.start();
     t1.start();
     t2.start();

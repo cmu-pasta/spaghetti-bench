@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.*;
 
 public class TokenRingBad {
     static int x1 = 1;
-    static int x2 = 2; 
+    static int x2 = 2;
     static int x3 = 1;
 
     static AtomicBoolean flag1 = new AtomicBoolean(false);
@@ -23,7 +23,7 @@ public class TokenRingBad {
         Thread id2 = new Thread(() -> {
             synchronized (TokenRingBad.class) {
                 x2 = x1;
-                flag2.set(true);  
+                flag2.set(true);
             }
         });
 
@@ -37,7 +37,7 @@ public class TokenRingBad {
         Thread id4 = new Thread(() -> {
             synchronized (TokenRingBad.class) {
                 if (flag1.get() && flag2.get() && flag3.get()) {
-                    assert (x1 == x2 && x2 == x3); /* BAD */
+                    assert (x1 == x2 && x2 == x3);
                 }
             }
         });

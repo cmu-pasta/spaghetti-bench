@@ -57,7 +57,6 @@ public class Wronglock3Bad {
         int x = dataValue;
         dataValue++;
         if (dataValue != (x + 1)) {
-            System.err.println("Bug Found!");
             assert false;
         }
         unlock(dataLock);
@@ -65,7 +64,7 @@ public class Wronglock3Bad {
 
     private static void funcB(int id) {
         lock(thisLock);
-        dataValue++; 
+        dataValue++;
         unlock(thisLock);
     }
 

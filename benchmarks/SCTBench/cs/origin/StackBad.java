@@ -71,7 +71,7 @@ public class StackBad {
                 m.lock();
                 try {
                     if (flag)
-                        assert pop(arr) != UNDERFLOW; /* BAD */
+                        assert pop(arr) != UNDERFLOW;
                 } finally {
                     m.unlock();
                 }

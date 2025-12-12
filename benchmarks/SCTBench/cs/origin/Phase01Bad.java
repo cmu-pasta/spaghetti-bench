@@ -6,7 +6,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Phase01Bad {
-  
+
   static ReentrantLock x = new ReentrantLock();
   static ReentrantLock y = new ReentrantLock();
   static int lockStatus = 0;
@@ -16,7 +16,7 @@ public class Phase01Bad {
       System.out.println("Deadlock detected");
       throw new RuntimeException();
     }
-    x.lock(); // BAD: deadlock
+    x.lock();
     x.unlock();
     if (lockStatus == 1) {
       System.out.println("Deadlock detected");

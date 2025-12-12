@@ -24,7 +24,7 @@ public class Sync01Bad {
                     t2.interrupt();
                     throw new RuntimeException();
                 }
-                empty.await();  // BAD: deadlock
+                empty.await();
             }
             num++;
             full.signal();
