@@ -70,8 +70,8 @@ public class StackBad {
             for (int i = 0; i < SIZE; i++) {
                 m.lock();
                 try {
-                    if (flag && getTop() > 0)
-                        assert pop(arr) != UNDERFLOW;
+                    if (flag)
+                        assert pop(arr) != UNDERFLOW; /* BAD */
                 } finally {
                     m.unlock();
                 }
