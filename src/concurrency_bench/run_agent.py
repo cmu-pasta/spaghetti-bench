@@ -5,6 +5,7 @@ import os
 import argparse
 import json
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 import traceback
@@ -178,6 +179,26 @@ def run_task(
         else:
             raise ValueError(f"Unknown task type: {task_type}")
 
+        # Create a git baseline after setup, before the agent runs
+        git_dir = workdir / "repo" if (workdir / "repo").exists() else workdir
+        subprocess.run(["git", "init"], cwd=git_dir, capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.name", "Concurrency Bench"],
+            cwd=git_dir,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.email", "bench@example.com"],
+            cwd=git_dir,
+            capture_output=True,
+        )
+        subprocess.run(["git", "add", "-A"], cwd=git_dir, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Baseline after setup"],
+            cwd=git_dir,
+            capture_output=True,
+        )
+
         # Run the agent
         print("Starting agent...")
         conversation = agent.run_agent()
@@ -214,16 +235,10 @@ def run_task(
         print(f"Saved conversation to: {result_file}")
 
         # Save git diff of changes made by the agent
-        import subprocess
-
-        # For real-world projects, diff is in the repo subdirectory
         git_dir = workdir / "repo" if (workdir / "repo").exists() else workdir
-
-        # Initialize git if needed (for SCTBench)
-        subprocess.run(["git", "init"], cwd=git_dir, capture_output=True)
         subprocess.run(["git", "add", "-A"], cwd=git_dir, capture_output=True)
 
-        # Generate diff
+        # Generate diff against baseline commit
         diff_result = subprocess.run(
             ["git", "diff", "--cached"],
             cwd=git_dir,

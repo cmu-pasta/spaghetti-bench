@@ -52,13 +52,15 @@ class FixBugTask(ConcurrencyTask):
                     f"{self._loader._task_name}",
                     # TODO: Add Fray specific args after testing
                     # "--scheduler=pos",
-                    # "--iterations=1000",
+                    # "--iter=1000",
                 ],
             )
 
         # Extract stack trace if the test failed
         if not passes:
             self.stack_trace = extract_stack_trace(output)
+
+        print(f"Stack trace: {self.stack_trace}")
 
         # Original task should fail with Fray
         # print(output)
