@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/reorder_3_bad.c
 
@@ -8,6 +7,7 @@ public class Reorder10Bad {
 
     private static volatile int a = 0;
     private static volatile int b = 0;
+    private static final Object lock = new Object();
 
     public static void main(String[] args) {
         int i, err;
@@ -51,14 +51,17 @@ public class Reorder10Bad {
     }
 
     private static void setThread() {
-        a = 1;
-        b = -1;
+        synchronized (lock) {
+            a = 1;
+            b = -1;
+        }
     }
 
     private static void checkThread() {
-        if (!((a == 0 && b == 0) || (a == 1 && b == -1))) {
-            System.err.println("Bug found!");
-            assert false;
+        synchronized (lock) {
+            if (!((a == 0 && b == 0) || (a == 1 && b == -1))) {
+                assert false;
+            }
         }
     }
 }

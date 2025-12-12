@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/queue_bad.c
 
@@ -50,10 +49,9 @@ public class QueueBad {
   static int enqueue(QType q, int x) {
     q.element[q.tail] = x;
     q.amount++;
+    q.tail++;
     if (q.tail == SIZE) {
-      q.tail = 1;
-    } else {
-      q.tail++;
+      q.tail = 0;
     }
     return 0;
   }
@@ -62,10 +60,9 @@ public class QueueBad {
     int x;
     x = q.element[q.head];
     q.amount--;
+    q.head++;
     if (q.head == SIZE) {
-      q.head = 1; 
-    } else {
-      q.head++; 
+      q.head = 0;
     }
     return x;
   }
@@ -104,10 +101,12 @@ public class QueueBad {
 
     Thread t2 = new Thread(() -> {
       int i;
+      int dequeue_count = 0;
       for (i=0; i<SIZE; i++) {
         mutex.lock();
         if (dequeue_flag) {
-          assert dequeue(queue) == stored_elements[i]; // BAD
+          assert dequeue(queue) == stored_elements[dequeue_count];
+          dequeue_count++;
           dequeue_flag = FALSE;
           enqueue_flag = TRUE;
         }

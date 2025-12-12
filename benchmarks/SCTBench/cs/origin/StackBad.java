@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/stack_bad.c
 
@@ -72,7 +71,7 @@ public class StackBad {
                 m.lock();
                 try {
                     if (flag)
-                        assert pop(arr) != UNDERFLOW; /* BAD */
+                        assert pop(arr) != UNDERFLOW;
                 } finally {
                     m.unlock();
                 }

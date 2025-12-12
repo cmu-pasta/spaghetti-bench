@@ -1,5 +1,4 @@
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/arithmetic_prog_bad.c
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -58,9 +57,14 @@ public class ArithmeticProgBad {
 
       j++;
     }
-    total = total + j;
-    System.out.println("total ...." + total);
-    flag = true;
+    m.lock();
+    try {
+      total = total + j;
+      System.out.println("total ...." + total);
+      flag = true;
+    } finally {
+      m.unlock();
+    }
   }
 
   public static void main(String[] args) {
@@ -80,8 +84,13 @@ public class ArithmeticProgBad {
       e.printStackTrace();
     }
 
-    if (flag) {
-      assert total != ((N * (N + 1)) / 2); // BAD
+    m.lock();
+    try {
+      if (flag) {
+        assert total != ((N * (N + 1)) / 2);
+      }
+    } finally {
+      m.unlock();
     }
   }
 }

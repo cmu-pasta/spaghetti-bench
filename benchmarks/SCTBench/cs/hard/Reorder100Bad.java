@@ -1,4 +1,3 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.hard;
 
 public class Reorder100Bad {
     private static int iSet = 99;

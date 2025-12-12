@@ -1,6 +1,5 @@
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/fsbench_bad.c
 
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -40,7 +39,7 @@ public class FsbenchBad {
             }
         }
         assert i >= 0 && i < NUMBLOCKS;
-        locki[i].unlock(); // BAD: array locki upper bound
+        locki[i].unlock();
     }
 
     public static void main(String[] args) {
