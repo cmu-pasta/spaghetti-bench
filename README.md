@@ -178,10 +178,12 @@ Conversation data is saved in a structured directory:
 results/
 ├── fix_bug/
 │   └── sctbench/
-│       └── Reorder3Bad.json
+│       ├── Reorder3Bad.json
+│       └── Reorder3Bad.patch
 └── trigger_bug/
     └── sctbench/
-        └── Reorder3Bad.json
+        ├── Reorder3Bad.json
+        └── Reorder3Bad.patch
 ```
 
 Each JSON file contains:
@@ -193,9 +195,34 @@ Each JSON file contains:
 - `subcategory` - Benchmark subcategory
 - `conversation_id` - Unique conversation ID
 - `success` - Boolean indicating task success
+- `setup_output` - Output from initial bug triggering
+- `verify_output` - Output from verification after agent's fix
 - `events` - Full conversation event stream (all messages, tool calls, responses, etc.)
 
+Each `.patch` file contains a git diff of the changes made by the agent.
+
 This data enables post-hoc analysis, debugging, and replay of agent interactions.
+
+### Trace Visualizer
+
+The `viz/` directory contains a web-based trace visualizer for exploring agent conversations:
+
+```bash
+cd viz
+python3 serve_traces.py
+```
+
+Then open http://localhost:8001 in your browser.
+
+**Features:**
+- **Interactive Timeline**: View the complete sequence of events in agent conversations
+- **Patch Diff View**: See code changes with GitHub-style syntax highlighting
+- **Auto-Loading**: Automatically loads all traces from `results/` directory
+- **Live Updates**: Watches for new or modified trace files and auto-reloads
+- **Shareable Links**: Click any trace to update the URL for easy sharing
+- **Smart Truncation**: Long outputs show only the tail with option to expand
+
+See [`viz/README.md`](viz/README.md) for more details.
 
 ## Benchmarks
 
