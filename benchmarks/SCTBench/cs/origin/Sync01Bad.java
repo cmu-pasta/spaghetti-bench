@@ -1,8 +1,5 @@
-package cmu.pasta.fray.benchmark.sctbench.cs.origin;
-
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/sync01_bad.c
 
-import java.lang.management.ManagementFactory;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
@@ -20,17 +17,7 @@ public class Sync01Bad {
         m.lock();
         try {
             while (num > 0) {
-                Thread t = new Thread(() -> {
-                    m.lock(); // make sure t is executed after empty.await();
-                    int activeCount = Thread.activeCount();
-                    m.unlock();
-                    if (activeCount == 3) {
-                        System.out.println("Deadlock detected");
-                        System.exit(1);
-                    }
-                });
-                t.start();
-                empty.await();  // BAD: deadlock
+                empty.await();
             }
             num++;
             full.signal();
