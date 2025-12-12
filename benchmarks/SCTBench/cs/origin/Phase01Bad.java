@@ -12,19 +12,10 @@ public class Phase01Bad {
   static int lockStatus = 0;
 
   static void thread1() {
-    if (lockStatus == 1) {
-      System.out.println("Deadlock detected");
-      throw new RuntimeException();
-    }
     x.lock();
     x.unlock();
-    if (lockStatus == 1) {
-      System.out.println("Deadlock detected");
-      throw new RuntimeException();
-    }
     x.lock();
     lockStatus = 1;
-    // x.unlock();
 
     y.lock();
     y.unlock();
