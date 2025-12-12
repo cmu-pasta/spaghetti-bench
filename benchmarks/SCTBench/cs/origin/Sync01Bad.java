@@ -1,3 +1,4 @@
+package cmu.pasta.fray.benchmark.sctbench.cs.origin;
 
 // Translated from: https://github.com/mc-imperial/sctbench/blob/d59ab26ddaedcd575ffb6a1f5e9711f7d6d2d9f2/benchmarks/concurrent-software-benchmarks/sync01_bad.c
 
@@ -19,12 +20,17 @@ public class Sync01Bad {
         m.lock();
         try {
             while (num > 0) {
-                if (Thread.activeCount() == 2 || emptySignaled) {
-                    System.out.println("Deadlock detected");
-                    t2.interrupt();
-                    throw new RuntimeException();
-                }
-                empty.await();
+                Thread t = new Thread(() -> {
+                    m.lock(); // make sure t is executed after empty.await();
+                    int activeCount = Thread.activeCount();
+                    m.unlock();
+                    if (activeCount == 3) {
+                        System.out.println("Deadlock detected");
+                        System.exit(1);
+                    }
+                });
+                t.start();
+                empty.await();  // BAD: deadlock
             }
             num++;
             full.signal();
@@ -34,23 +40,14 @@ public class Sync01Bad {
             m.unlock();
         }
     }
-    static volatile boolean emptySignaled = false;
 
     static void thread2() {
         m.lock();
         try {
             while (num == 0) {
-                if (Thread.activeCount() == 2) {
-                    System.out.println("Deadlock detected");
-                    t1.interrupt();
-                    throw new RuntimeException();
-                }
                 full.await();
             }
-            // num--;
-            // System.out.println("consume ....");
             empty.signal();
-            emptySignaled = true;
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -58,14 +55,11 @@ public class Sync01Bad {
         }
     }
 
-    public static Thread t1;
-    public static Thread t2;
     public static void main(String[] args) {
         num = 1;
-        emptySignaled = false;
 
-        t1 = new Thread(() -> thread1());
-        t2 = new Thread(() -> thread2());
+        Thread t1 = new Thread(() -> thread1());
+        Thread t2 = new Thread(() -> thread2());
 
         t1.start();
         t2.start();
