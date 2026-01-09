@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 import traceback
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from concurrency_bench.agents import FixBugAgent, TriggerBugAgent
 from concurrency_bench.tasks.fix_bug import FixBugTask
@@ -85,6 +86,7 @@ def run_task(
     base_path: Path,
     results_dir: Path,
     api_key: str | None = None,
+    enable_fray_tools: bool = False,
 ):
     """Run a single task with the specified agent.
 
@@ -95,6 +97,7 @@ def run_task(
         base_path: Base path to resolve relative paths from.
         results_dir: Directory to save conversation results.
         api_key: Optional API key for the LLM.
+        enable_fray_tools: Enable Fray-specific debugging tools for fix_bug tasks.
     """
     print(f"\n{'='*80}")
     print(f"Running task: {task['instance_id']}")
@@ -161,6 +164,7 @@ def run_task(
                 model_id=model_id,
                 api_key=api_key,
                 task_info=task_info,
+                enable_fray_tools=enable_fray_tools,
             )
         elif task_type == "trigger_bug":
             task_obj = TriggerBugTask(workdir=workdir, loader=task_loader)
@@ -305,6 +309,17 @@ def main():
         default=Path("results"),
         help="Directory to save conversation results (default: results/)",
     )
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=1,
+        help="Maximum number of parallel workers (default: 1)",
+    )
+    parser.add_argument(
+        "--enable-fray-tools",
+        action="store_true",
+        help="Enable Fray-specific debugging tools (rerun_fray, replay_fray) for fix_bug tasks",
+    )
 
     args = parser.parse_args()
 
@@ -323,33 +338,81 @@ def main():
 
     # Run tasks
     results = []
-    for task in tasks:
-        try:
-            result = run_task(
-                task=task,
-                task_type=args.task_type,
-                model_id=args.model_id,
-                base_path=args.base_path,
-                results_dir=args.results_dir,
-                api_key=args.api_key,
-            )
-            results.append(
-                {
-                    "instance_id": task["instance_id"],
-                    "success": result.success,
-                }
-            )
-        except Exception as e:
-            tb = traceback.format_exc()
-            print(tb)
-            print(f"Error running task {task['instance_id']}: {e}")
-            results.append(
-                {
-                    "instance_id": task["instance_id"],
-                    "success": False,
-                    "error": str(e),
-                }
-            )
+
+    if args.max_workers == 1:
+        # Sequential execution
+        print("Running tasks sequentially")
+        for task in tasks:
+            try:
+                result = run_task(
+                    task=task,
+                    task_type=args.task_type,
+                    model_id=args.model_id,
+                    base_path=args.base_path,
+                    results_dir=args.results_dir,
+                    api_key=args.api_key,
+                    enable_fray_tools=args.enable_fray_tools,
+                )
+                results.append(
+                    {
+                        "instance_id": task["instance_id"],
+                        "success": result.success,
+                    }
+                )
+                print(f"Completed: {task['instance_id']} - Success: {result.success}")
+            except Exception as e:
+                tb = traceback.format_exc()
+                print(tb)
+                print(f"Error running task {task['instance_id']}: {e}")
+                results.append(
+                    {
+                        "instance_id": task["instance_id"],
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
+    else:
+        # Parallel execution
+        print(f"Running tasks in parallel with {args.max_workers} workers")
+        with ProcessPoolExecutor(max_workers=args.max_workers) as executor:
+            # Submit all tasks
+            future_to_task = {
+                executor.submit(
+                    run_task,
+                    task=task,
+                    task_type=args.task_type,
+                    model_id=args.model_id,
+                    base_path=args.base_path,
+                    results_dir=args.results_dir,
+                    api_key=args.api_key,
+                    enable_fray_tools=args.enable_fray_tools,
+                ): task
+                for task in tasks
+            }
+
+            # Process results as they complete
+            for future in as_completed(future_to_task):
+                task = future_to_task[future]
+                try:
+                    result = future.result()
+                    results.append(
+                        {
+                            "instance_id": task["instance_id"],
+                            "success": result.success,
+                        }
+                    )
+                    print(f"Completed: {task['instance_id']} - Success: {result.success}")
+                except Exception as e:
+                    tb = traceback.format_exc()
+                    print(tb)
+                    print(f"Error running task {task['instance_id']}: {e}")
+                    results.append(
+                        {
+                            "instance_id": task["instance_id"],
+                            "success": False,
+                            "error": str(e),
+                        }
+                    )
 
     # Print summary
     print(f"\n{'='*80}")

@@ -44,6 +44,19 @@ class ConcurrencyAgent(ABC):
         """
         pass
 
+    def add_tools(self, tools: list) -> list:
+        """Add additional tools to the base tool list.
+
+        Override this method to add custom tools like Fray tools.
+
+        Args:
+            tools: List of base tools
+
+        Returns:
+            list: Extended list of tools
+        """
+        return tools
+
     def configure_tools(self):
         """Configure tools for the agent. Overriding this
         would be useful for adding specific concurrency tools like Fray.
@@ -51,12 +64,13 @@ class ConcurrencyAgent(ABC):
         Returns:
             list: List of tools for the agent.
         """
-
-        return [
+        tools = [
             Tool(name=TerminalTool.name, params={"terminal_type": "subprocess"}),
             Tool(name=FileEditorTool.name),
             Tool(name=TaskTrackerTool.name),
         ]
+
+        return self.add_tools(tools)
 
     def initialize_agent(self) -> Agent:
         llm = LLM(
