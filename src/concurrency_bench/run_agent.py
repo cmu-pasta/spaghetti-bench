@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Script to run concurrency benchmark agents on tasks."""
 
-import os
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import tempfile
-from pathlib import Path
 import traceback
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
 
 from concurrency_bench.agents import FixBugAgent, TriggerBugAgent
+from concurrency_bench.tasks import loaders
 from concurrency_bench.tasks.fix_bug import FixBugTask
 from concurrency_bench.tasks.trigger_bug import TriggerBugTask
-from concurrency_bench.tasks import loaders
 
 
 def load_tasks(tasks_file: Path) -> list[dict]:
@@ -99,12 +99,12 @@ def run_task(
         api_key: Optional API key for the LLM.
         enable_fray_tools: Enable Fray-specific debugging tools for fix_bug tasks.
     """
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Running task: {task['instance_id']}")
     print(f"Description: {task['description']}")
     print(f"Task type: {task_type}")
     print(f"Model: {model_id}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     # Setup workdir
     workdir = setup_workdir(task, base_path)
@@ -401,7 +401,9 @@ def main():
                             "success": result.success,
                         }
                     )
-                    print(f"Completed: {task['instance_id']} - Success: {result.success}")
+                    print(
+                        f"Completed: {task['instance_id']} - Success: {result.success}"
+                    )
                 except Exception as e:
                     tb = traceback.format_exc()
                     print(tb)
@@ -415,9 +417,9 @@ def main():
                     )
 
     # Print summary
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("SUMMARY")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     successful = sum(1 for r in results if r["success"])
     print(f"Total tasks: {len(results)}")
     print(f"Successful: {successful}")

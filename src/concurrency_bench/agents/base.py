@@ -3,11 +3,17 @@
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
-from openhands.sdk import Agent, LLM, Conversation
+
+from openhands.sdk import LLM, Agent, Conversation
+from openhands.sdk.conversation.types import ConversationCallbackType
 from openhands.sdk.tool import Tool
 from openhands.tools.file_editor import FileEditorTool
 from openhands.tools.task_tracker import TaskTrackerTool
 from openhands.tools.terminal import TerminalTool
+
+from concurrency_bench.agents.noop_agent import NoopAgent
+
+NOOP_AGENT_ID = "noop"
 
 
 class ConcurrencyAgent(ABC):
@@ -72,7 +78,10 @@ class ConcurrencyAgent(ABC):
 
         return self.add_tools(tools)
 
-    def initialize_agent(self) -> Agent:
+    def initialize_agent(self) -> Agent | NoopAgent:
+        if self.model_id == NOOP_AGENT_ID:
+            self.agent = NoopAgent()
+            return self.agent
         llm = LLM(
             model=self.model_id,
             api_key=self.api_key,
@@ -91,9 +100,11 @@ class ConcurrencyAgent(ABC):
         if self.agent is None:
             self.initialize_agent()
 
-        conversation = Conversation(agent=self.agent, workspace=self.workdir)
-        description = self.task_description()
-        conversation.send_message(description)
-        conversation.run()
-
-        return conversation
+        if type(self.agent) is Agent:
+            conversation = Conversation(agent=self.agent, workspace=self.workdir)
+            description = self.task_description()
+            conversation.send_message(description)
+            conversation.run()
+            return conversation
+        if type(self.agent) is NoopAgent:
+            return self.agent.dummy_conversation()

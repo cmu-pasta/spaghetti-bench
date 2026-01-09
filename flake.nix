@@ -23,7 +23,7 @@
     };
 
     fray = {
-      url = "github:cmu-pasta/fray/update";
+      url = "github:cmu-pasta/fray";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -90,6 +90,7 @@
               virtualenv
               pkgs.uv
               pkgs.jdk21
+              fray.packages.${system}.default
             ];
             env = {
               UV_NO_SYNC = "1";
