@@ -34,12 +34,22 @@ The test that is failing (nondeterministically) is:
 
         # Add stack trace if available
 
-        if self.task_instance.stack_trace:
+        if self.task_instance.get_stack_trace():
             prompt += f"""
 When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stack trace:
 
 ```
-{self.task_instance.stack_trace}
+{self.task_instance.get_stack_trace()}
+```
+
+"""
+
+        if self.task_instance.get_stdout():
+            prompt += f"""
+When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stdout output:
+
+```
+{self.task_instance.get_stdout()}
 ```
 
 """

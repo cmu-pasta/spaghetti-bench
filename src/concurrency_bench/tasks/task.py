@@ -17,6 +17,12 @@ class ConcurrencyTask:
         self._loader = loader
         pass
 
+    def get_stack_trace(self) -> str:
+        pass
+
+    def get_stdout(self) -> str:
+        pass
+
     def setup(self) -> str:
         """Setup the task and return stdout/stderr."""
         pass

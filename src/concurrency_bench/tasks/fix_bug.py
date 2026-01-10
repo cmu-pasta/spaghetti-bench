@@ -1,10 +1,11 @@
-import sys
 import re
-from concurrency_bench.tasks.task import ConcurrencyTask, TaskOutput
+import sys
+
 from concurrency_bench.tasks.loaders.real_world_junit_loader import RealWorldJUnitLoader
+from concurrency_bench.tasks.task import ConcurrencyTask, TaskOutput
 
 
-def extract_stack_trace(fray_output: str) -> str | None:
+def extract_stack_trace(fray_output: str) -> str:
     """Extract the stack trace from Fray output when an assertion fails.
 
     Returns:
@@ -18,13 +19,20 @@ def extract_stack_trace(fray_output: str) -> str | None:
     if match:
         return match.group(1).strip()
 
-    return None
+    return ""
 
 
 class FixBugTask(ConcurrencyTask):
     def __init__(self, workdir, loader):
         super().__init__(workdir, loader)
-        self.stack_trace = None
+        self.stack_trace = ""
+        self.stdout = ""
+
+    def get_stack_trace(self) -> str:
+        return self.stack_trace
+
+    def get_stdout(self) -> str:
+        return self.stdout
 
     def setup(self) -> str:
         """Set up the environment for the fix bug task.
@@ -59,8 +67,10 @@ class FixBugTask(ConcurrencyTask):
         # Extract stack trace if the test failed
         if not passes:
             self.stack_trace = extract_stack_trace(output)
+            self.stdout = open(self._workdir / "fray_workdir" / "stdout.txt").read()
 
-        print(f"Stack trace: {self.stack_trace}")
+        # print(f"Stack trace: {self.stack_trace}")
+        # print(f"Stdout: {self.stdout}")
 
         # Original task should fail with Fray
         # print(output)

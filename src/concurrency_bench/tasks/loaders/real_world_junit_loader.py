@@ -1,10 +1,10 @@
-from pathlib import Path
-import sys
-from typing import List, Optional
-from subprocess import run, PIPE, STDOUT
 import glob
 import json
 import os
+import sys
+from pathlib import Path
+from subprocess import PIPE, STDOUT, run
+from typing import List, Optional
 
 from concurrency_bench.tasks.loaders.task_loader import TaskLoader
 
@@ -99,6 +99,7 @@ class RealWorldJUnitLoader(TaskLoader):
         """Construct and run Fray command with JUnitRunner."""
         classpaths = self.get_classpaths(workdir)
         classpath_str = ":".join(classpaths)
+        fray_work_dir = workdir / "fray_workdir"
 
         # Build system properties
         properties = self.get_test_properties()
@@ -128,6 +129,8 @@ class RealWorldJUnitLoader(TaskLoader):
         if fray_configs:
             command.append("--")
             command.extend(fray_configs)
+        command.append(f"--output={fray_work_dir}")
+        command.append("--redirect-stdout")
 
         print(f"Running Fray with command: {' '.join(command)}")
         result = run(command, cwd=workdir, capture_output=True, text=True, check=False)
