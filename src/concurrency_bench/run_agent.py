@@ -12,34 +12,36 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 from concurrency_bench.agents import FixBugAgent, TriggerBugAgent
+from concurrency_bench.task_config import TaskConfig
 from concurrency_bench.tasks import loaders
 from concurrency_bench.tasks.fix_bug import FixBugTask
 from concurrency_bench.tasks.trigger_bug import TriggerBugTask
 
 
-def load_tasks(tasks_file: Path) -> list[dict]:
+def load_tasks(tasks_file: Path) -> list[TaskConfig]:
     """Load tasks from a JSONL file.
 
     Args:
         tasks_file: Path to the JSONL file.
 
     Returns:
-        List of task dictionaries.
+        List of Task objects.
     """
     tasks = []
     with open(tasks_file) as f:
         for line in f:
             line = line.strip()
             if line:
-                tasks.append(json.loads(line))
+                task_dict = json.loads(line)
+                tasks.append(TaskConfig.from_dict(task_dict))
     return tasks
 
 
-def setup_workdir(task: dict, base_path: Path) -> Path:
+def setup_workdir(task: TaskConfig, base_path: Path) -> Path:
     """Create a temporary directory and copy the task files or clone repository.
 
     Args:
-        task: Task dictionary with 'path' field or 'repo_url'/'commit' fields.
+        task: Task object with path or repo_url/commit fields.
         base_path: Base path to resolve relative paths from.
 
     Returns:
@@ -48,7 +50,7 @@ def setup_workdir(task: dict, base_path: Path) -> Path:
     # Create temporary directory
     temp_dir = Path(
         tempfile.mkdtemp(
-            prefix=f"concurrency_bench_{task['instance_id']}_",
+            prefix=f"concurrency_bench_{task.instance_id}_",
             dir=base_path / "workspaces",
         )
     )
@@ -56,12 +58,15 @@ def setup_workdir(task: dict, base_path: Path) -> Path:
     print(f"Created workdir: {temp_dir}")
 
     # For real-world tasks with repo_url, the loader will handle cloning
-    if "repo_url" in task:
+    if task.repo_url is not None:
         print(f"Repository will be cloned by loader into: {temp_dir}/repo")
         return temp_dir
 
     # For SCTBench-style tasks, copy the file
-    source_path = base_path / task["path"]
+    if task.path is None:
+        raise ValueError(f"Task {task.instance_id} has neither repo_url nor path")
+
+    source_path = base_path / task.path
 
     if not source_path.exists():
         raise FileNotFoundError(f"Source path does not exist: {source_path}")
@@ -80,18 +85,19 @@ def setup_workdir(task: dict, base_path: Path) -> Path:
 
 
 def run_task(
-    task: dict,
+    task_config: TaskConfig,
     task_type: str,
     model_id: str,
     base_path: Path,
     results_dir: Path,
     api_key: str | None = None,
     enable_fray_tools: bool = False,
+    keep_result: bool = False,
 ):
     """Run a single task with the specified agent.
 
     Args:
-        task: Task dictionary from JSONL.
+        task: Task object from JSONL.
         task_type: Type of task ('fix_bug' or 'trigger_bug').
         model_id: Model ID to use for the agent.
         base_path: Base path to resolve relative paths from.
@@ -100,17 +106,17 @@ def run_task(
         enable_fray_tools: Enable Fray-specific debugging tools for fix_bug tasks.
     """
     print(f"\n{'=' * 80}")
-    print(f"Running task: {task['instance_id']}")
-    print(f"Description: {task['description']}")
+    print(f"Running task: {task_config.instance_id}")
+    print(f"Description: {task_config.description}")
     print(f"Task type: {task_type}")
     print(f"Model: {model_id}")
     print(f"{'=' * 80}\n")
 
     # Setup workdir
-    workdir = setup_workdir(task, base_path)
+    workdir = setup_workdir(task_config, base_path)
 
-    # Initialize task loader based on task["loader"] field
-    loader_name = task.get("loader")
+    # Initialize task loader based on task.loader field
+    loader_name = task_config.loader
     if loader_name:
         loader_class = getattr(loaders, loader_name, None)
         if loader_class is None:
@@ -119,33 +125,19 @@ def run_task(
         # Real-world loaders (Kafka, Lucene, Guava) need additional parameters
         if loader_name in ["KafkaLoader", "LuceneLoader", "GuavaLoader"]:
             task_loader = loader_class(
-                task_name=task.get("task_name", task["instance_id"]),
-                repo_url=task["repo_url"],
-                commit=task["commit"],
-                test_class=task["test_class"],
-                test_method=task["test_method"],
+                task_name=task_config.instance_id,
+                repo_url=task_config.repo_url,
+                commit=task_config.commit,
+                test_class=task_config.test_class,
+                test_method=task_config.test_method,
             )
         else:
             # SCTBench and other simple loaders
-            task_loader = loader_class(
-                task_name=task.get("task_name", task["instance_id"])
-            )
+            task_loader = loader_class(task_name=task_config.instance_id)
     else:
         task_loader = None
 
     try:
-        # Prepare task info for the agent
-        task_info = {
-            "instance_id": task["instance_id"],
-            "description": task.get("description", ""),
-        }
-
-        # Add test-specific info for real-world projects
-        if "test_class" in task:
-            task_info["test_class"] = task["test_class"]
-        if "test_method" in task:
-            task_info["test_method"] = task["test_method"]
-
         # Initialize task
         if task_type == "fix_bug":
             task_obj = FixBugTask(workdir=workdir, loader=task_loader)
@@ -155,18 +147,16 @@ def run_task(
             setup_output = task_obj.setup()
             print("Setup complete!")
 
-            # Add stack trace to task_info if available
-            if task_obj.stack_trace:
-                task_info["stack_trace"] = task_obj.stack_trace
-
             agent = FixBugAgent(
                 workdir=workdir,
                 model_id=model_id,
                 api_key=api_key,
-                task_info=task_info,
+                task_config=task_config,
+                task_instance=task_obj,
                 enable_fray_tools=enable_fray_tools,
             )
         elif task_type == "trigger_bug":
+            # FIXME: This part is broken rn
             task_obj = TriggerBugTask(workdir=workdir, loader=task_loader)
 
             # Setup the task for trigger_bug
@@ -215,12 +205,12 @@ def run_task(
 
         # Save conversation data
         conversation_data = {
-            "instance_id": task["instance_id"],
+            "instance_id": task_config.instance_id,
             "task_type": task_type,
             "model_id": model_id,
-            "description": task.get("description", ""),
-            "benchmark_category": task.get("benchmark_category", ""),
-            "subcategory": task.get("subcategory", ""),
+            "description": task_config.description,
+            "benchmark_category": task_config.benchmark_category,
+            "subcategory": task_config.subcategory,
             "conversation_id": str(conversation.id),
             "success": result.success,
             "setup_output": setup_output,
@@ -229,11 +219,9 @@ def run_task(
         }
 
         # Write to results directory with structure: results_dir/task_type/benchmark_category/instance_id.json
-        task_results_dir = (
-            results_dir / task_type / task.get("benchmark_category", "unknown")
-        )
+        task_results_dir = results_dir / task_type / task_config.benchmark_category
         task_results_dir.mkdir(parents=True, exist_ok=True)
-        result_file = task_results_dir / f"{task['instance_id']}.json"
+        result_file = task_results_dir / f"{task_config.instance_id}.json"
         with open(result_file, "w") as f:
             json.dump(conversation_data, f, indent=2)
         print(f"Saved conversation to: {result_file}")
@@ -250,7 +238,7 @@ def run_task(
             text=True,
         )
 
-        patch_file = task_results_dir / f"{task['instance_id']}.patch"
+        patch_file = task_results_dir / f"{task_config.instance_id}.patch"
         with open(patch_file, "w") as f:
             f.write(diff_result.stdout)
         print(f"Saved patch to: {patch_file}")
@@ -259,8 +247,9 @@ def run_task(
 
     finally:
         # Cleanup temporary directory
-        print(f"\nCleaning up workdir: {workdir}")
-        shutil.rmtree(workdir, ignore_errors=True)
+        if not keep_result and workdir.exists():
+            print(f"\nCleaning up workdir: {workdir}")
+            shutil.rmtree(workdir, ignore_errors=True)
 
 
 def main():
@@ -320,6 +309,11 @@ def main():
         action="store_true",
         help="Enable Fray-specific debugging tools (rerun_fray, replay_fray) for fix_bug tasks",
     )
+    parser.add_argument(
+        "--keep-result",
+        action="store_true",
+        help="Keep result files even if the task fails",
+    )
 
     args = parser.parse_args()
 
@@ -330,7 +324,7 @@ def main():
 
     # Filter by instance_id if specified
     if args.instance_id:
-        tasks = [t for t in tasks if t["instance_id"] == args.instance_id]
+        tasks = [t for t in tasks if t.instance_id == args.instance_id]
         if not tasks:
             print(f"Error: No task found with instance_id '{args.instance_id}'")
             return 1
@@ -345,28 +339,29 @@ def main():
         for task in tasks:
             try:
                 result = run_task(
-                    task=task,
+                    task_config=task,
                     task_type=args.task_type,
                     model_id=args.model_id,
                     base_path=args.base_path,
                     results_dir=args.results_dir,
                     api_key=args.api_key,
                     enable_fray_tools=args.enable_fray_tools,
+                    keep_result=args.keep_result,
                 )
                 results.append(
                     {
-                        "instance_id": task["instance_id"],
+                        "instance_id": task.instance_id,
                         "success": result.success,
                     }
                 )
-                print(f"Completed: {task['instance_id']} - Success: {result.success}")
+                print(f"Completed: {task.instance_id} - Success: {result.success}")
             except Exception as e:
                 tb = traceback.format_exc()
                 print(tb)
-                print(f"Error running task {task['instance_id']}: {e}")
+                print(f"Error running task {task.instance_id}: {e}")
                 results.append(
                     {
-                        "instance_id": task["instance_id"],
+                        "instance_id": task.instance_id,
                         "success": False,
                         "error": str(e),
                     }
@@ -397,20 +392,18 @@ def main():
                     result = future.result()
                     results.append(
                         {
-                            "instance_id": task["instance_id"],
+                            "instance_id": task.instance_id,
                             "success": result.success,
                         }
                     )
-                    print(
-                        f"Completed: {task['instance_id']} - Success: {result.success}"
-                    )
+                    print(f"Completed: {task.instance_id} - Success: {result.success}")
                 except Exception as e:
                     tb = traceback.format_exc()
                     print(tb)
-                    print(f"Error running task {task['instance_id']}: {e}")
+                    print(f"Error running task {task.instance_id}: {e}")
                     results.append(
                         {
-                            "instance_id": task["instance_id"],
+                            "instance_id": task.instance_id,
                             "success": False,
                             "error": str(e),
                         }

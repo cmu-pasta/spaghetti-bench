@@ -1,5 +1,5 @@
 from concurrency_bench.agents.base import ConcurrencyAgent
-from concurrency_bench.tools.fray_tools import RerunFrayTool, ReplayFrayTool
+from concurrency_bench.tools.fray_tools import ReplayFrayTool, RerunFrayTool
 
 
 class FixBugAgent(ConcurrencyAgent):
@@ -25,31 +25,21 @@ class FixBugAgent(ConcurrencyAgent):
 """
 
         # Add test-specific information for real-world projects
-        if "test_class" in self.task_info and "test_method" in self.task_info:
-            prompt += f"""
+        prompt += f"""
 The test that is failing (nondeterministically) is:
-- Test class: {self.task_info['test_class']}
-- Test method: {self.task_info['test_method']}
-
-"""
-        # Add file/class information for SCTBench tasks
-        elif "instance_id" in self.task_info:
-            # For SCTBench, the instance_id is the class name (e.g., "Reorder3Bad")
-            class_name = self.task_info['instance_id']
-            prompt += f"""
-The program that has the bug:
-- File: {class_name}.java
-- Main method: {class_name}.main()
+- Test class: {self.task_config.test_class}
+- Test method: {self.task_config.test_method}
 
 """
 
         # Add stack trace if available
-        if "stack_trace" in self.task_info:
+
+        if self.task_instance.stack_trace:
             prompt += f"""
 When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stack trace:
 
 ```
-{self.task_info['stack_trace']}
+{self.task_instance.stack_trace}
 ```
 
 """
@@ -83,7 +73,9 @@ These tools are useful for iterative debugging:
 
 """
 
-        prompt += "When complete, use the finish tool to report what you found and fixed."
+        prompt += (
+            "When complete, use the finish tool to report what you found and fixed."
+        )
 
         return prompt
 

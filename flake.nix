@@ -39,7 +39,7 @@
     }:
     let
       inherit (nixpkgs) lib;
-      forAllSystems = lib.genAttrs lib.systems.flakeExposed;
+      forAllSystems = lib.genAttrs lib.stdenv.hostPlatform.system.flakeExposed;
 
       workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
 

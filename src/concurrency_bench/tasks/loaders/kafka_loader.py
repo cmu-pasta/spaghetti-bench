@@ -1,7 +1,7 @@
-from pathlib import Path
-from typing import List
-from subprocess import run
 import os
+from pathlib import Path
+from subprocess import run
+from typing import List
 
 from concurrency_bench.tasks.loaders.real_world_junit_loader import RealWorldJUnitLoader
 
@@ -141,7 +141,4 @@ class KafkaLoader(RealWorldJUnitLoader):
         return {}
 
     def get_fray_configs(self) -> List[str]:
-        return [
-            "--iter", "10000", 
-            "--sleep-as-yield"
-        ]
+        return ["--iter", "10000", "--sleep-as-yield", "--no-reset-class-loader"]

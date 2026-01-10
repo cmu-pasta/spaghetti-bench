@@ -12,6 +12,8 @@ from openhands.tools.task_tracker import TaskTrackerTool
 from openhands.tools.terminal import TerminalTool
 
 from concurrency_bench.agents.noop_agent import NoopAgent
+from concurrency_bench.task_config import TaskConfig
+from concurrency_bench.tasks.task import ConcurrencyTask
 
 NOOP_AGENT_ID = "noop"
 
@@ -23,9 +25,10 @@ class ConcurrencyAgent(ABC):
         self,
         workdir: Path,
         model_id: str,
+        task_config: TaskConfig,
+        task_instance: ConcurrencyTask,
         api_key: str | None = None,
         base_url: str | None = None,
-        task_info: dict | None = None,
     ):
         """Initialize the ConcurrencyAgent.
 
@@ -33,12 +36,14 @@ class ConcurrencyAgent(ABC):
             workdir: Working directory for the agent.
             model_id: The model ID to use (e.g., "bedrock/bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0").
             api_key: API key for the LLM provider (defaults to env var).
-            task_info: Optional dictionary with task-specific information (test_class, test_method, etc.).
+            task_config: Configuration for the task.
+            task_instance: Instance of the concurrency task.
         """
         self.workdir = workdir
         self.model_id = model_id
         self.api_key = api_key or os.getenv("LLM_API_KEY")
-        self.task_info = task_info or {}
+        self.task_config = task_config
+        self.task_instance = task_instance
         self.agent = None
 
     @abstractmethod
