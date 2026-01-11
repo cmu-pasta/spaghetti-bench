@@ -1,5 +1,5 @@
 {
-  description = "concurrency-bench";
+  description = "Spaghetti Bench";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -39,7 +39,7 @@
     }:
     let
       inherit (nixpkgs) lib;
-      forAllSystems = lib.genAttrs lib.stdenv.hostPlatform.system.flakeExposed;
+      forAllSystems = lib.genAttrs lib.systems.flakeExposed;
 
       workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
 

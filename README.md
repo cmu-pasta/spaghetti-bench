@@ -1,4 +1,9 @@
-# Concurrency Bench
+# Spaghetti Bench
+
+<a href="https://github.com/cmu-pasta/spaghetti-bench">
+  <img src="./logo/spaghettibench-high-resolution-logo-transparent.png" width="256" alt="logo"/>
+</a>
+
 
 A benchmark for evaluating AI coding agents on concurrency bug tasks.
 
