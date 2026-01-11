@@ -128,6 +128,7 @@ def run_task(
             "LuceneLoader",
             "GuavaLoader",
             "UniffleLoader",
+            "MercuryLoader",
         ]:
             task_loader = loader_class(
                 task_name=task_config.instance_id,
