@@ -1,7 +1,5 @@
-# Spaghetti Bench
-
 <a href="https://github.com/cmu-pasta/spaghetti-bench">
-  <img src="./logo/spaghettibench-high-resolution-logo-transparent.png" width="256" alt="logo"/>
+  <img src="./logo/spaghettibench-high-resolution-logo-transparent.png" width="512" alt="logo"/>
 </a>
 
 
