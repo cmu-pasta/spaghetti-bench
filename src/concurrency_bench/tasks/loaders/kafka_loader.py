@@ -19,6 +19,7 @@ class KafkaLoader(RealWorldJUnitLoader):
         commit: str,
         test_class: str,
         test_method: str,
+        fray_args: List[str] = [],
     ):
         super().__init__(
             task_name=task_name,
@@ -27,6 +28,7 @@ class KafkaLoader(RealWorldJUnitLoader):
             test_class=test_class,
             test_method=test_method,
             junit_version="junit5",
+            fray_args=fray_args,
         )
 
     def apply_patches(self, repo_path: Path):
@@ -141,4 +143,10 @@ class KafkaLoader(RealWorldJUnitLoader):
         return {}
 
     def get_fray_configs(self) -> List[str]:
-        return ["--iter", "10000", "--sleep-as-yield", "--no-reset-class-loader"]
+        return [
+            "--iter",
+            "5000",
+            "--no-reset-class-loader",
+            "--scheduler",
+            "pos",
+        ]

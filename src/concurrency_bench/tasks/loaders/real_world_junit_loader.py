@@ -26,6 +26,7 @@ class RealWorldJUnitLoader(TaskLoader):
         commit: str,
         test_class: str,
         test_method: str,
+        fray_args: List[str] = [],
         junit_version: str = "junit5",
     ):
         super().__init__(task_name)
@@ -35,6 +36,7 @@ class RealWorldJUnitLoader(TaskLoader):
         self.test_method = test_method
         self.junit_version = junit_version
         self.repo_dir_name = "repo"
+        self.fray_args = fray_args
 
     def clone_repo(self, workdir: Path):
         print(f"Cloning {self.repo_url} at commit {self.commit}...")
@@ -129,6 +131,7 @@ class RealWorldJUnitLoader(TaskLoader):
         if fray_configs:
             command.append("--")
             command.extend(fray_configs)
+        command.extend(self.fray_args)
         command.append(f"--output={fray_work_dir}")
         command.append("--redirect-stdout")
 

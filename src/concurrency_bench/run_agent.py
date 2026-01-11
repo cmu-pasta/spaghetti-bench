@@ -130,6 +130,7 @@ def run_task(
                 commit=task_config.commit,
                 test_class=task_config.test_class,
                 test_method=task_config.test_method,
+                fray_args=task_config.fray_args,
             )
         else:
             # SCTBench and other simple loaders

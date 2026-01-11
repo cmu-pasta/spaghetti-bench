@@ -44,7 +44,7 @@ When we ran Fray (a concurrency testing tool) to trigger the bug, we got the fol
 
 """
 
-        if self.task_instance.get_stdout():
+        if self.task_instance.get_stdout().strip():
             prompt += f"""
 When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stdout output:
 

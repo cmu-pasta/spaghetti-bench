@@ -11,11 +11,12 @@ from openhands.tools.file_editor import FileEditorTool
 from openhands.tools.task_tracker import TaskTrackerTool
 from openhands.tools.terminal import TerminalTool
 
-from concurrency_bench.agents.noop_agent import NoopAgent
+from concurrency_bench.agents.builtin_agents import GoldenAgent, NoopAgent
 from concurrency_bench.task_config import TaskConfig
 from concurrency_bench.tasks.task import ConcurrencyTask
 
 NOOP_AGENT_ID = "noop"
+GOLDEN_AGENT_ID = "golden_agent"
 
 
 class ConcurrencyAgent(ABC):
@@ -83,9 +84,12 @@ class ConcurrencyAgent(ABC):
 
         return self.add_tools(tools)
 
-    def initialize_agent(self) -> Agent | NoopAgent:
+    def initialize_agent(self) -> Agent | NoopAgent | GoldenAgent:
         if self.model_id == NOOP_AGENT_ID:
             self.agent = NoopAgent()
+            return self.agent
+        if self.model_id == GOLDEN_AGENT_ID:
+            self.agent = GoldenAgent()
             return self.agent
         llm = LLM(
             model=self.model_id,
@@ -113,3 +117,8 @@ class ConcurrencyAgent(ABC):
             return conversation
         if type(self.agent) is NoopAgent:
             return self.agent.dummy_conversation()
+        if type(self.agent) is GoldenAgent:
+            return self.agent.run(
+                workdir=self.workdir,
+                patch_url=self.task_config.patch_url,
+            )

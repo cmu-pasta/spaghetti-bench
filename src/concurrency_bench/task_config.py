@@ -1,6 +1,6 @@
 """Task data class for concurrency benchmarks."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -15,6 +15,8 @@ class TaskConfig:
     path: str | None = None
     repo_url: str | None = None
     commit: str | None = None
+    patch_url: str | None = None
+    fray_args: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict) -> "TaskConfig":
@@ -29,6 +31,8 @@ class TaskConfig:
             commit=data.get("commit"),
             test_class=data["test_class"],
             test_method=data["test_method"],
+            patch_url=data.get("patch_url"),
+            fray_args=data.get("fray_args", []),
         )
 
     def to_dict(self) -> dict:
@@ -47,8 +51,8 @@ class TaskConfig:
             data["repo_url"] = self.repo_url
         if self.commit is not None:
             data["commit"] = self.commit
+        if self.patch_url is not None:
+            data["patch_url"] = self.patch_url
+        if self.fray_args:
+            data["fray_args"] = self.fray_args
         return data
-
-
-class TaskInfo:
-    pass
