@@ -123,7 +123,12 @@ def run_task(
             raise ValueError(f"Unknown loader: {loader_name}")
 
         # Real-world loaders (Kafka, Lucene, Guava) need additional parameters
-        if loader_name in ["KafkaLoader", "LuceneLoader", "GuavaLoader"]:
+        if loader_name in [
+            "KafkaLoader",
+            "LuceneLoader",
+            "GuavaLoader",
+            "UniffleLoader",
+        ]:
             task_loader = loader_class(
                 task_name=task_config.instance_id,
                 repo_url=task_config.repo_url,

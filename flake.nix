@@ -90,6 +90,7 @@
               virtualenv
               pkgs.uv
               pkgs.jdk21
+              pkgs.maven
               fray.packages.${system}.default
             ];
             env = {
@@ -162,6 +163,7 @@
                 pkgs.gradle
                 pkgs.curl
                 pkgs.cacert
+                pkgs.maven
                 repoSource
                 fray.packages.${system}.default
               ];
