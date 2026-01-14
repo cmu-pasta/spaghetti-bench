@@ -101,7 +101,7 @@ class RealWorldJUnitLoader(TaskLoader):
         """Construct and run Fray command with JUnitRunner."""
         classpaths = self.get_classpaths(workdir)
         classpath_str = ":".join(classpaths)
-        fray_work_dir = workdir / "fray_workdir"
+        fray_work_dir = workdir / ".fray_workdir"
 
         # Build system properties
         properties = self.get_test_properties()

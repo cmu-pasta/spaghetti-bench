@@ -51,6 +51,7 @@ class FixBugTask(ConcurrencyTask):
             [output, passes] = self._loader.run(self._workdir)
         else:
             # SCTBench-style loaders use simple command-line invocation
+            fray_work_dir = self._workdir / ".fray_workdir"
             [output, passes] = self._loader.run(
                 self._workdir,
                 run_command=[
@@ -58,16 +59,16 @@ class FixBugTask(ConcurrencyTask):
                     "-cp",
                     ".",
                     f"{self._loader._task_name}",
-                    # TODO: Add Fray specific args after testing
-                    # "--scheduler=pos",
-                    # "--iter=1000",
+                    "--",
+                    "--redirect-stdout",
+                    f"--output={fray_work_dir}",
                 ],
             )
 
         # Extract stack trace if the test failed
         if not passes:
             self.stack_trace = extract_stack_trace(output)
-            self.stdout = open(self._workdir / "fray_workdir" / "stdout.txt").read()
+            self.stdout = open(self._workdir / ".fray_workdir" / "stdout.txt").read()
 
         # print(f"Stack trace: {self.stack_trace}")
         # print(f"Stdout: {self.stdout}")
