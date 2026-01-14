@@ -17,6 +17,8 @@ PORT = 8001
 SCRIPT_DIR = Path(__file__).resolve().parent
 RESULTS_DIR = SCRIPT_DIR.parent / "results"
 VISUALIZER_PATH = SCRIPT_DIR / "trace_visualizer.html"
+LEADERBOARD_PATH = SCRIPT_DIR / "leaderboard.html"
+LEADERBOARD_DATA_PATH = SCRIPT_DIR / "leaderboard_data.json"
 
 
 class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
@@ -31,9 +33,19 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
             self.serve_visualizer()
             return
 
+        # Serve the leaderboard page
+        if path == "/leaderboard" or path == "/leaderboard.html":
+            self.serve_leaderboard()
+            return
+
         # API endpoint to list all traces
         if path == "/api/traces":
             self.list_traces()
+            return
+
+        # Serve leaderboard data
+        if path == "/leaderboard_data.json":
+            self.serve_leaderboard_data()
             return
 
         # API endpoint to get a specific trace
@@ -185,6 +197,42 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(content.encode('utf-8'))
         except Exception as e:
             self.send_error(500, f"Error serving visualizer: {str(e)}")
+
+    def serve_leaderboard(self):
+        """Serve the leaderboard HTML page."""
+        try:
+            if not LEADERBOARD_PATH.exists():
+                self.send_error(404, "Leaderboard page not found")
+                return
+
+            with open(LEADERBOARD_PATH, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.send_header('Content-Length', len(content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(content.encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, f"Error serving leaderboard: {str(e)}")
+
+    def serve_leaderboard_data(self):
+        """Serve the leaderboard data JSON."""
+        try:
+            if not LEADERBOARD_DATA_PATH.exists():
+                self.send_error(404, "Leaderboard data not found. Run aggregate_results.py first.")
+                return
+
+            with open(LEADERBOARD_DATA_PATH, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Content-Length', len(content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(content.encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, f"Error serving leaderboard data: {str(e)}")
 
     def list_traces(self):
         """List all trace JSON files in the results directory."""

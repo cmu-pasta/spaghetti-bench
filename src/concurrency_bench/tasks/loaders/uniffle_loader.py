@@ -42,7 +42,7 @@ class UniffleLoader(RealWorldJUnitLoader):
             check=False,
         )
         if result.returncode != 0:
-            raise RuntimeError(f"Failed to build uniffle: {result.stderr}")
+            raise RuntimeError(f"Failed to build uniffle: {result.stdout} {result.stderr}")
 
         print("Running mvn copy-dependencies...")
         result = run(

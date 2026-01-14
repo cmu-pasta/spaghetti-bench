@@ -69,10 +69,21 @@ other than the logic of the fix.
 
         # Add Fray tools instructions if enabled
         if self.enable_fray_tools:
-            prompt += """
+            fray_command = self.task_instance.get_fray_command_template()
+            prompt += f"""
 You have access to special Fray debugging tools:
 - rerun_fray: Rerun Fray to verify your fix works
 - replay_fray: Replay the last Fray recording to reproduce the bug with your changes
+
+The Fray command to use for this test is:
+```
+{fray_command}
+```
+
+For replaying, add `--replay /tmp/report/recording` to the command:
+```
+{fray_command} --replay /tmp/report/recording
+```
 
 These tools are useful for iterative debugging:
 1. Add debug print statements
@@ -80,6 +91,8 @@ These tools are useful for iterative debugging:
 3. Use replay_fray to see the prints in the buggy interleaving
 4. Analyze and fix
 5. Use rerun_fray to verify the fix
+
+IMPORTANT: After making changes and rebuilding, use the exact Fray command provided above.
 
 """
 

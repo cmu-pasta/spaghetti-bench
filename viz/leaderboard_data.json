@@ -1,0 +1,336 @@
+{
+  "generated_at": "2026-01-14T18:49:05.050124+00:00",
+  "total_traces": 33,
+  "models": {
+    "bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0": {
+      "total": 1,
+      "success": 1,
+      "failure": 0,
+      "by_category": {
+        "real-world": {
+          "total": 1,
+          "success": 1,
+          "success_rate": 100.0
+        }
+      },
+      "by_task_type": {
+        "fix_bug": {
+          "total": 1,
+          "success": 1,
+          "success_rate": 100.0
+        }
+      },
+      "traces": [
+        {
+          "instance_id": "Kafka_DefaultTaskManager_blockOnAwait",
+          "path": "claude-sonnet-4-5/bedrock_global.anthropic.claude-opus-4-5-20251101-v1_0/with_fray/fix_bug/real-world/Kafka_DefaultTaskManager_blockOnAwait.json",
+          "success": true,
+          "category": "real-world",
+          "task_type": "fix_bug"
+        }
+      ],
+      "success_rate": 100.0
+    },
+    "bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0": {
+      "total": 32,
+      "success": 26,
+      "failure": 6,
+      "by_category": {
+        "real-world": {
+          "total": 4,
+          "success": 0,
+          "success_rate": 0.0
+        },
+        "sctbench": {
+          "total": 28,
+          "success": 26,
+          "success_rate": 92.85714285714286
+        }
+      },
+      "by_task_type": {
+        "fix_bug": {
+          "total": 32,
+          "success": 26,
+          "success_rate": 81.25
+        }
+      },
+      "traces": [
+        {
+          "instance_id": "Mercury_MulticastTest",
+          "path": "claude-sonnet-4-5/bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0/with_fray/fix_bug/real-world/Mercury_MulticastTest.json",
+          "success": false,
+          "category": "real-world",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Mercury_MulticastTest",
+          "path": "claude-sonnet-4-5/fix_bug/real-world/Mercury_MulticastTest.json",
+          "success": false,
+          "category": "real-world",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Reorder3Bad",
+          "path": "fix_bug/sctbench/Reorder3Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "StringBufferJDK",
+          "path": "fix_bug/sctbench/StringBufferJDK.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "WorkStealQueue",
+          "path": "fix_bug/sctbench/WorkStealQueue.json",
+          "success": false,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Reorder100Bad",
+          "path": "fix_bug/sctbench/Reorder100Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Reorder50Bad",
+          "path": "fix_bug/sctbench/Reorder50Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "AccountBad",
+          "path": "fix_bug/sctbench/AccountBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "ArithmeticProgBad",
+          "path": "fix_bug/sctbench/ArithmeticProgBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "BluetoothDriverBad",
+          "path": "fix_bug/sctbench/BluetoothDriverBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Carter01Bad",
+          "path": "fix_bug/sctbench/Carter01Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "CircularBufferBad",
+          "path": "fix_bug/sctbench/CircularBufferBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Deadlock01Bad",
+          "path": "fix_bug/sctbench/Deadlock01Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "FsbenchBad",
+          "path": "fix_bug/sctbench/FsbenchBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Lazy01Bad",
+          "path": "fix_bug/sctbench/Lazy01Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Phase01Bad",
+          "path": "fix_bug/sctbench/Phase01Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "QueueBad",
+          "path": "fix_bug/sctbench/QueueBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Reorder10Bad",
+          "path": "fix_bug/sctbench/Reorder10Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Reorder20Bad",
+          "path": "fix_bug/sctbench/Reorder20Bad.json",
+          "success": false,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Reorder4Bad",
+          "path": "fix_bug/sctbench/Reorder4Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Reorder5Bad",
+          "path": "fix_bug/sctbench/Reorder5Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "StackBad",
+          "path": "fix_bug/sctbench/StackBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Sync01Bad",
+          "path": "fix_bug/sctbench/Sync01Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Sync02Bad",
+          "path": "fix_bug/sctbench/Sync02Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "TokenRingBad",
+          "path": "fix_bug/sctbench/TokenRingBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Twostage100Bad",
+          "path": "fix_bug/sctbench/Twostage100Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "TwostageBad",
+          "path": "fix_bug/sctbench/TwostageBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Wronglock1Bad",
+          "path": "fix_bug/sctbench/Wronglock1Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Wronglock3Bad",
+          "path": "fix_bug/sctbench/Wronglock3Bad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "WronglockBad",
+          "path": "fix_bug/sctbench/WronglockBad.json",
+          "success": true,
+          "category": "sctbench",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Kafka_KAFKA-18418",
+          "path": "fix_bug/real-world/Kafka_KAFKA-18418.json",
+          "success": false,
+          "category": "real-world",
+          "task_type": "fix_bug"
+        },
+        {
+          "instance_id": "Kafka_DefaultTaskManager_blockOnAwait",
+          "path": "fix_bug/real-world/Kafka_DefaultTaskManager_blockOnAwait.json",
+          "success": false,
+          "category": "real-world",
+          "task_type": "fix_bug"
+        }
+      ],
+      "success_rate": 81.25
+    }
+  },
+  "categories": {
+    "real-world": {
+      "total": 5,
+      "success": 1,
+      "by_model": {
+        "bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0": {
+          "total": 1,
+          "success": 1,
+          "success_rate": 100.0
+        },
+        "bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0": {
+          "total": 4,
+          "success": 0,
+          "success_rate": 0.0
+        }
+      },
+      "success_rate": 20.0
+    },
+    "sctbench": {
+      "total": 28,
+      "success": 26,
+      "by_model": {
+        "bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0": {
+          "total": 28,
+          "success": 26,
+          "success_rate": 92.85714285714286
+        }
+      },
+      "success_rate": 92.85714285714286
+    }
+  },
+  "task_types": {
+    "fix_bug": {
+      "total": 33,
+      "success": 27,
+      "by_model": {
+        "bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0": {
+          "total": 1,
+          "success": 1,
+          "success_rate": 100.0
+        },
+        "bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0": {
+          "total": 32,
+          "success": 26,
+          "success_rate": 81.25
+        }
+      },
+      "success_rate": 81.81818181818183
+    }
+  }
+}

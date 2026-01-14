@@ -12,6 +12,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 from concurrency_bench.agents import FixBugAgent, TriggerBugAgent
+from concurrency_bench.agents.builtin_agents import GoldenAgent
 from concurrency_bench.task_config import TaskConfig
 from concurrency_bench.tasks import loaders
 from concurrency_bench.tasks.fix_bug import FixBugTask
@@ -177,6 +178,26 @@ def run_task(
                 api_key=api_key,
                 task_info=task_info,
             )
+        elif task_type == "run_gold":
+            # Golden agent: apply patch from URL
+            if task_config.patch_url is None:
+                raise ValueError(f"Task {task_config.instance_id} has no patch_url for run_gold task type")
+
+            task_obj = FixBugTask(workdir=workdir, loader=task_loader)
+
+            # Setup the task (clone repo, build)
+            print("Setting up task...")
+            setup_output = task_obj.setup()
+            print("Setup complete!")
+
+            # Apply the golden patch
+            agent = GoldenAgent()
+            print(f"Applying golden patch from: {task_config.patch_url}")
+            conversation = agent.run(workdir=workdir, patch_url=task_config.patch_url)
+            print("Golden patch applied!")
+
+            # Skip the normal agent run since GoldenAgent doesn't use the SDK
+            # Jump directly to verification after creating git baseline
         else:
             raise ValueError(f"Unknown task type: {task_type}")
 
@@ -200,10 +221,11 @@ def run_task(
             capture_output=True,
         )
 
-        # Run the agent
-        print("Starting agent...")
-        conversation = agent.run_agent()
-        print("\nAgent finished!")
+        # Run the agent (unless it's run_gold which already ran)
+        if task_type != "run_gold":
+            print("Starting agent...")
+            conversation = agent.run_agent()
+            print("\nAgent finished!")
 
         # Verify the result
         print("\nVerifying results...")
@@ -225,8 +247,14 @@ def run_task(
             "events": [event.model_dump() for event in conversation.state.events],
         }
 
-        # Write to results directory with structure: results_dir/task_type/benchmark_category/instance_id.json
-        task_results_dir = results_dir / task_type / task_config.benchmark_category
+        # Sanitize model_id for use in directory name (replace / with _)
+        sanitized_model_id = model_id.replace("/", "_").replace(":", "_")
+
+        # Add with_fray or without_fray based on enable_fray_tools flag
+        fray_mode = "with_fray" if enable_fray_tools else "without_fray"
+
+        # Write to results directory with structure: results_dir/model_id/fray_mode/task_type/benchmark_category/instance_id.json
+        task_results_dir = results_dir / sanitized_model_id / fray_mode / task_type / task_config.benchmark_category
         task_results_dir.mkdir(parents=True, exist_ok=True)
         result_file = task_results_dir / f"{task_config.instance_id}.json"
         with open(result_file, "w") as f:
@@ -274,14 +302,15 @@ def main():
         "--task-type",
         type=str,
         required=True,
-        choices=["fix_bug", "trigger_bug"],
+        choices=["fix_bug", "trigger_bug", "run_gold"],
         help="Type of task to run",
     )
     parser.add_argument(
         "--model-id",
         type=str,
-        required=True,
-        help="Model ID to use (e.g., 'anthropic/claude-sonnet-4-5-20250929')",
+        required=False,
+        default="golden",
+        help="Model ID to use (e.g., 'anthropic/claude-sonnet-4-5-20250929'). Defaults to 'golden' for run_gold task type.",
     )
     parser.add_argument(
         "--base-path",

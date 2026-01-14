@@ -34,6 +34,47 @@ class FixBugTask(ConcurrencyTask):
     def get_stdout(self) -> str:
         return self.stdout
 
+    def get_fray_command_template(self) -> str:
+        """Get the Fray command template for rerunning tests.
+
+        Returns:
+            The Fray command string, or empty string if not applicable.
+        """
+        if isinstance(self._loader, RealWorldJUnitLoader):
+            # For real-world projects, construct the full command with classpath
+            classpaths = self._loader.get_classpaths(self._workdir)
+            classpath_str = ":".join(classpaths)
+
+            # Get system properties
+            properties = self._loader.get_test_properties()
+            properties["net.bytebuddy.experimental"] = "true"
+
+            # Build the command
+            cmd_parts = ["fray", "-cp", classpath_str]
+
+            for k, v in properties.items():
+                cmd_parts.append(f"-J-D{k}={v}")
+
+            cmd_parts.extend([
+                "org.pastalab.fray.helpers.JUnitRunner",
+                self._loader.junit_version,
+                f"{self._loader.test_class}#{self._loader.test_method}",
+            ])
+
+            # Add Fray configs
+            fray_configs = self._loader.get_fray_configs()
+            if fray_configs:
+                cmd_parts.append("--")
+                cmd_parts.extend(fray_configs)
+            cmd_parts.extend(self._loader.fray_args)
+            cmd_parts.append("--output=/tmp/report")
+            cmd_parts.append("--redirect-stdout")
+
+            return " ".join(cmd_parts)
+        else:
+            # For SCTBench-style tasks, simple command
+            return f"fray -cp . {self._loader._task_name}"
+
     def setup(self) -> str:
         """Set up the environment for the fix bug task.
 
