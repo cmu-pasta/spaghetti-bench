@@ -94,6 +94,7 @@ def run_task(
     api_key: str | None = None,
     enable_fray_tools: bool = False,
     keep_result: bool = False,
+    repetition: int | None = None,
 ):
     """Run a single task with the specified agent.
 
@@ -108,6 +109,8 @@ def run_task(
     """
     print(f"\n{'=' * 80}")
     print(f"Running task: {task_config.instance_id}")
+    if repetition is not None:
+        print(f"Repetition: {repetition}")
     print(f"Description: {task_config.description}")
     print(f"Task type: {task_type}")
     print(f"Model: {model_id}")
@@ -253,8 +256,12 @@ def run_task(
         # Add with_fray or without_fray based on enable_fray_tools flag
         fray_mode = "with_fray" if enable_fray_tools else "without_fray"
 
-        # Write to results directory with structure: results_dir/model_id/fray_mode/task_type/benchmark_category/instance_id.json
-        task_results_dir = results_dir / sanitized_model_id / fray_mode / task_type / task_config.benchmark_category
+        # Build results directory path
+        # Structure: results_dir/model_id/fray_mode/[rep_N/]task_type/benchmark_category/instance_id.json
+        if repetition is not None:
+            task_results_dir = results_dir / sanitized_model_id / fray_mode / f"rep_{repetition}" / task_type / task_config.benchmark_category
+        else:
+            task_results_dir = results_dir / sanitized_model_id / fray_mode / task_type / task_config.benchmark_category
         task_results_dir.mkdir(parents=True, exist_ok=True)
         result_file = task_results_dir / f"{task_config.instance_id}.json"
         with open(result_file, "w") as f:
@@ -350,6 +357,12 @@ def main():
         action="store_true",
         help="Keep result files even if the task fails",
     )
+    parser.add_argument(
+        "--repetition",
+        type=int,
+        default=None,
+        help="Repetition/experiment ID to include in results path (e.g., 1, 2, 3)",
+    )
 
     args = parser.parse_args()
 
@@ -383,6 +396,7 @@ def main():
                     api_key=args.api_key,
                     enable_fray_tools=args.enable_fray_tools,
                     keep_result=args.keep_result,
+                    repetition=args.repetition,
                 )
                 results.append(
                     {
@@ -410,13 +424,15 @@ def main():
             future_to_task = {
                 executor.submit(
                     run_task,
-                    task=task,
+                    task_config=task,
                     task_type=args.task_type,
                     model_id=args.model_id,
                     base_path=args.base_path,
                     results_dir=args.results_dir,
                     api_key=args.api_key,
                     enable_fray_tools=args.enable_fray_tools,
+                    keep_result=args.keep_result,
+                    repetition=args.repetition,
                 ): task
                 for task in tasks
             }

@@ -5,10 +5,11 @@ MAX_WORKERS=1
 MEMORY="8g"
 CPUS="4"
 ENABLE_FRAY_TOOLS=""
+REPS=1
 
 # Parse arguments
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 <fix|trigger|gold> [--max-workers N] [--memory XG] [--cpus N] [--enable-fray-tools]"
+  echo "Usage: $0 <fix|trigger|gold> [--max-workers N] [--memory XG] [--cpus N] [--enable-fray-tools] [--reps N]"
   exit 1
 fi
 
@@ -48,6 +49,10 @@ while [[ "$#" -gt 0 ]]; do
       ENABLE_FRAY_TOOLS="--enable-fray-tools"
       shift
       ;;
+    --reps)
+      REPS="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown parameter: $1"
       exit 1
@@ -55,17 +60,31 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
-docker run --rm -it \
-  --memory="$MEMORY" \
-  --cpus="$CPUS" \
-  -v $(pwd):/workspace \
-  -e LLM_API_KEY=$(cat ~/.aws/bedrock.key) \
-  concurrency-bench:latest \
-  python src/concurrency_bench/run_agent.py \
-    --tasks-file src/concurrency_bench/kafka.jsonl \
-    --task-type "$TASK_TYPE" \
-    --model-id bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0 \
-    --results-dir results/claude-sonnet-4-5/ \
-    --max-workers "$MAX_WORKERS" \
-    $ENABLE_FRAY_TOOLS
+for REP in $(seq 1 $REPS); do
+  echo "=========================================="
+  echo "Running repetition $REP of $REPS"
+  echo "=========================================="
+
+  # Only pass --repetition if running multiple reps
+  if [ "$REPS" -gt 1 ]; then
+    REP_ARG="--repetition $REP"
+  else
+    REP_ARG=""
+  fi
+
+  docker run --rm -it \
+    --memory="$MEMORY" \
+    --cpus="$CPUS" \
+    -v $(pwd):/workspace \
+    -e LLM_API_KEY=$(cat ~/.aws/bedrock.key) \
+    concurrency-bench:latest \
+    python src/concurrency_bench/run_agent.py \
+      --tasks-file src/concurrency_bench/sctbench.jsonl \
+      --task-type "$TASK_TYPE" \
+      --model-id bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0 \
+      --results-dir results/claude-opus-4-5/ \
+      --max-workers "$MAX_WORKERS" \
+      $ENABLE_FRAY_TOOLS \
+      $REP_ARG
+done
 

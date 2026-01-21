@@ -31,19 +31,6 @@ The test that is failing (nondeterministically) is:
 - Test method: {self.task_config.test_method}
 
 """
-
-        # Add stack trace if available
-
-        if self.task_instance.get_stack_trace():
-            prompt += f"""
-When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stack trace:
-
-```
-{self.task_instance.get_stack_trace()}
-```
-
-"""
-
         if self.task_instance.get_stdout().strip():
             prompt += f"""
 When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stdout output:
@@ -71,18 +58,12 @@ other than the logic of the fix.
         if self.enable_fray_tools:
             fray_command = self.task_instance.get_fray_command_template()
             prompt += f"""
-You have access to special Fray debugging tools:
+You have access to the special Fray debugging tool:
 - rerun_fray: Rerun Fray to verify your fix works
-- replay_fray: Replay the last Fray recording to reproduce the bug with your changes
 
 The Fray command to use for this test is:
 ```
 {fray_command}
-```
-
-For replaying, add `--replay /tmp/report/recording` to the command:
-```
-{fray_command} --replay /tmp/report/recording
 ```
 
 These tools are useful for iterative debugging:
