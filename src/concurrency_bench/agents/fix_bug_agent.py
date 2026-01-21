@@ -1,5 +1,4 @@
 from concurrency_bench.agents.base import ConcurrencyAgent
-from concurrency_bench.tools.fray_tools import ReplayFrayTool, RerunFrayTool
 
 
 class FixBugAgent(ConcurrencyAgent):
@@ -31,9 +30,21 @@ The test that is failing (nondeterministically) is:
 - Test method: {self.task_config.test_method}
 
 """
+        # Include stack trace if available
+        if self.task_instance.get_stack_trace().strip():
+            prompt += f"""
+When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following error/stack trace:
+
+```
+{self.task_instance.get_stack_trace()}
+```
+
+"""
+
+        # Include stdout if available
         if self.task_instance.get_stdout().strip():
             prompt += f"""
-When we ran Fray (a concurrency testing tool) to trigger the bug, we got the following stdout output:
+The stdout output from the buggy execution was:
 
 ```
 {self.task_instance.get_stdout()}

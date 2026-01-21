@@ -109,7 +109,12 @@ class FixBugTask(ConcurrencyTask):
         # Extract stack trace if the test failed
         if not passes:
             self.stack_trace = extract_stack_trace(output)
-            self.stdout = open(self._workdir / ".fray_workdir" / "stdout.txt").read()
+            stdout_file = self._workdir / ".fray_workdir" / "stdout.txt"
+            if stdout_file.exists():
+                self.stdout = stdout_file.read_text()
+            else:
+                print(f"Warning: stdout file not found at {stdout_file}")
+                self.stdout = ""
 
         # print(f"Stack trace: {self.stack_trace}")
         # print(f"Stdout: {self.stdout}")
