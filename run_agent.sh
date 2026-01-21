@@ -60,9 +60,12 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
+# Array to store background PIDs
+PIDS=()
+
 for REP in $(seq 1 $REPS); do
   echo "=========================================="
-  echo "Running repetition $REP of $REPS"
+  echo "Starting repetition $REP of $REPS"
   echo "=========================================="
 
   # Only pass --repetition if running multiple reps
@@ -72,7 +75,7 @@ for REP in $(seq 1 $REPS); do
     REP_ARG=""
   fi
 
-  docker run --rm -it \
+  docker run --rm \
     --memory="$MEMORY" \
     --cpus="$CPUS" \
     -v $(pwd):/workspace \
@@ -85,6 +88,26 @@ for REP in $(seq 1 $REPS); do
       --results-dir results/claude-opus-4-5/ \
       --max-workers "$MAX_WORKERS" \
       $ENABLE_FRAY_TOOLS \
-      $REP_ARG
+      $REP_ARG &
+
+  PIDS+=($!)
 done
+
+echo "=========================================="
+echo "Waiting for all $REPS repetitions to complete..."
+echo "=========================================="
+
+# Wait for all background processes and track failures
+FAILED=0
+for PID in "${PIDS[@]}"; do
+  if ! wait $PID; then
+    FAILED=$((FAILED + 1))
+  fi
+done
+
+echo "=========================================="
+echo "All repetitions completed. Failed: $FAILED / $REPS"
+echo "=========================================="
+
+exit $FAILED
 
