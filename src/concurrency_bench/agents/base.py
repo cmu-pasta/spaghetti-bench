@@ -94,6 +94,7 @@ class ConcurrencyAgent(ABC):
         llm = LLM(
             model=self.model_id,
             api_key=self.api_key,
+            max_output_tokens=8192,
         )
 
         tools = self.configure_tools()

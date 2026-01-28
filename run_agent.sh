@@ -6,10 +6,11 @@ MEMORY="8g"
 CPUS="4"
 ENABLE_FRAY_TOOLS=""
 REPS=1
+MODEL_ID="gemini/gemini-3-pro-preview"
 
 # Parse arguments
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 <fix|trigger|gold> [--max-workers N] [--memory XG] [--cpus N] [--enable-fray-tools] [--reps N]"
+  echo "Usage: $0 <fix|trigger|gold> [--model-id MODEL] [--max-workers N] [--memory XG] [--cpus N] [--enable-fray-tools] [--reps N]"
   exit 1
 fi
 
@@ -33,6 +34,10 @@ shift
 # Parse optional arguments
 while [[ "$#" -gt 0 ]]; do
   case $1 in
+    --model-id)
+      MODEL_ID="$2"
+      shift 2
+      ;;
     --max-workers)
       MAX_WORKERS="$2"
       shift 2
@@ -60,6 +65,18 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
+# Print configuration
+echo "=========================================="
+echo "Configuration:"
+echo "  Task Type: $TASK_TYPE"
+echo "  Model ID: $MODEL_ID"
+echo "  Max Workers: $MAX_WORKERS"
+echo "  Memory: $MEMORY"
+echo "  CPUs: $CPUS"
+echo "  Fray Tools: $([ -n "$ENABLE_FRAY_TOOLS" ] && echo "enabled" || echo "disabled")"
+echo "  Repetitions: $REPS"
+echo "=========================================="
+
 # Array to store background PIDs
 PIDS=()
 
@@ -79,13 +96,14 @@ for REP in $(seq 1 $REPS); do
     --memory="$MEMORY" \
     --cpus="$CPUS" \
     -v $(pwd):/workspace \
+    -e OPENAI_API_KEY="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" \
     -e LLM_API_KEY=$(cat ~/.aws/bedrock.key) \
     concurrency-bench:latest \
     python src/concurrency_bench/run_agent.py \
-      --tasks-file src/concurrency_bench/sctbench.jsonl \
+      --tasks-file src/concurrency_bench/all.jsonl \
       --task-type "$TASK_TYPE" \
-      --model-id bedrock/global.anthropic.claude-opus-4-5-20251101-v1:0 \
-      --results-dir results/claude-opus-4-5/ \
+      --model-id "$MODEL_ID" \
+      --results-dir results/ \
       --max-workers "$MAX_WORKERS" \
       $ENABLE_FRAY_TOOLS \
       $REP_ARG &

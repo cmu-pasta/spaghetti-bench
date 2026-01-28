@@ -2,6 +2,7 @@
 """
 Aggregate benchmark results from all trace files.
 Creates a summary JSON file with per-model and per-category statistics.
+Averages results over 5 repetitions per model+config combination.
 """
 
 import json
@@ -10,29 +11,34 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 
+def get_friendly_name(model_id):
+    """Convert model ID to friendly name."""
+    mapping = {
+        "bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0": "Claude 4.5 Sonnet",
+        "bedrock_global.anthropic.claude-opus-4-5-20251101-v1_0": "Claude 4.5 Opus",
+        "openai_gpt-5.2": "GPT-5.2",
+        "openai_gpt-5.1-codex": "GPT-5.2 Codex",
+        "gemini_gemini-3-pro-preview": "Gemini 3.0 Pro",
+        "gemini_gemini-3-flash-preview": "Gemini 3.0 Flash",
+        "bedrock_qwen.qwen3-coder-480b-a35b-v1_0": "Qwen 3 Coder",
+        "openai_gpt-4o": "GPT-4o",
+        "bedrock_us.meta.llama4-maverick-17b-instruct-v1_0": "Llama 4 Maverick 17B",
+    }
+    return mapping.get(model_id, model_id)
+
+
 def aggregate_results(results_dir: Path, output_file: Path):
     """Aggregate all trace results into a summary JSON file."""
 
     # Data structures for aggregation
-    model_stats = defaultdict(lambda: {
-        'total': 0,
-        'success': 0,
-        'failure': 0,
-        'by_category': defaultdict(lambda: {'total': 0, 'success': 0}),
-        'by_task_type': defaultdict(lambda: {'total': 0, 'success': 0}),
+    # Key: (model_id, config) -> instance_id -> [list of success values across reps]
+    instance_results = defaultdict(lambda: defaultdict(list))
+
+    # Store metadata for each model+config combo
+    model_config_metadata = defaultdict(lambda: {
+        'model_id': None,
+        'config': None,
         'traces': []
-    })
-
-    category_stats = defaultdict(lambda: {
-        'total': 0,
-        'success': 0,
-        'by_model': defaultdict(lambda: {'total': 0, 'success': 0})
-    })
-
-    task_type_stats = defaultdict(lambda: {
-        'total': 0,
-        'success': 0,
-        'by_model': defaultdict(lambda: {'total': 0, 'success': 0})
     })
 
     # Scan all JSON files
@@ -41,11 +47,23 @@ def aggregate_results(results_dir: Path, output_file: Path):
 
     for json_file in json_files:
         try:
+            # Parse directory structure to extract model_id and config
+            parts = json_file.relative_to(results_dir).parts
+
+            if len(parts) < 4:
+                continue
+
+            model_id = parts[0]
+            config = parts[1]  # with_fray or without_fray
+
+            # Check if this is in a repetition directory
+            if not parts[2].startswith("rep_"):
+                continue
+
             with open(json_file, 'r') as f:
                 trace = json.load(f)
 
             # Extract key fields
-            model_id = trace.get('model_id', 'unknown')
             success = trace.get('success', False)
             category = trace.get('benchmark_category', 'unknown')
             task_type = trace.get('task_type', 'unknown')
@@ -54,22 +72,16 @@ def aggregate_results(results_dir: Path, output_file: Path):
             # Relative path from results dir
             rel_path = json_file.relative_to(results_dir)
 
-            # Update model stats
-            model_stats[model_id]['total'] += 1
-            if success:
-                model_stats[model_id]['success'] += 1
-            else:
-                model_stats[model_id]['failure'] += 1
+            # Store result by model+config+instance
+            key = (model_id, config)
+            instance_results[key][instance_id].append(success)
 
-            model_stats[model_id]['by_category'][category]['total'] += 1
-            if success:
-                model_stats[model_id]['by_category'][category]['success'] += 1
+            # Store metadata
+            if model_config_metadata[key]['model_id'] is None:
+                model_config_metadata[key]['model_id'] = model_id
+                model_config_metadata[key]['config'] = config
 
-            model_stats[model_id]['by_task_type'][task_type]['total'] += 1
-            if success:
-                model_stats[model_id]['by_task_type'][task_type]['success'] += 1
-
-            model_stats[model_id]['traces'].append({
+            model_config_metadata[key]['traces'].append({
                 'instance_id': instance_id,
                 'path': str(rel_path),
                 'success': success,
@@ -77,67 +89,57 @@ def aggregate_results(results_dir: Path, output_file: Path):
                 'task_type': task_type
             })
 
-            # Update category stats
-            category_stats[category]['total'] += 1
-            if success:
-                category_stats[category]['success'] += 1
-
-            category_stats[category]['by_model'][model_id]['total'] += 1
-            if success:
-                category_stats[category]['by_model'][model_id]['success'] += 1
-
-            # Update task type stats
-            task_type_stats[task_type]['total'] += 1
-            if success:
-                task_type_stats[task_type]['success'] += 1
-
-            task_type_stats[task_type]['by_model'][model_id]['total'] += 1
-            if success:
-                task_type_stats[task_type]['by_model'][model_id]['success'] += 1
-
         except Exception as e:
             print(f"Error processing {json_file}: {e}")
             continue
 
-    # Convert defaultdicts to regular dicts for JSON serialization
-    def dict_to_regular(d):
-        if isinstance(d, defaultdict):
-            d = {k: dict_to_regular(v) for k, v in d.items()}
-        return d
+    # Now compute averaged statistics for each model+config combination
+    model_stats = {}
 
-    model_stats = dict_to_regular(model_stats)
-    category_stats = dict_to_regular(category_stats)
-    task_type_stats = dict_to_regular(task_type_stats)
+    for (model_id, config), instances in instance_results.items():
+        # Create display name
+        friendly_name = get_friendly_name(model_id)
+        config_display = config.replace("_", " ")
+        display_name = f"{friendly_name} ({config_display})"
 
-    # Calculate percentages
-    for model_id, stats in model_stats.items():
-        stats['success_rate'] = (stats['success'] / stats['total'] * 100) if stats['total'] > 0 else 0
+        # Compute average success rate per instance
+        total_instances = len(instances)
+        successful_instances = 0
+        total_attempts = 0
+        successful_attempts = 0
 
-        for category, cat_stats in stats['by_category'].items():
-            cat_stats['success_rate'] = (cat_stats['success'] / cat_stats['total'] * 100) if cat_stats['total'] > 0 else 0
+        for instance_id, successes in instances.items():
+            total_attempts += len(successes)
+            successful_attempts += sum(successes)
+            # Average over repetitions for this instance
+            avg_success = sum(successes) / len(successes) if successes else 0
+            # Count as successful if average is > 0.5 (majority of reps succeeded)
+            if avg_success > 0.5:
+                successful_instances += 1
 
-        for task_type, tt_stats in stats['by_task_type'].items():
-            tt_stats['success_rate'] = (tt_stats['success'] / tt_stats['total'] * 100) if tt_stats['total'] > 0 else 0
+        success_rate = (successful_instances / total_instances * 100) if total_instances > 0 else 0
+        num_reps = len(list(instances.values())[0]) if instances else 0
 
-    for category, stats in category_stats.items():
-        stats['success_rate'] = (stats['success'] / stats['total'] * 100) if stats['total'] > 0 else 0
-
-        for model_id, model_stats_in_cat in stats['by_model'].items():
-            model_stats_in_cat['success_rate'] = (model_stats_in_cat['success'] / model_stats_in_cat['total'] * 100) if model_stats_in_cat['total'] > 0 else 0
-
-    for task_type, stats in task_type_stats.items():
-        stats['success_rate'] = (stats['success'] / stats['total'] * 100) if stats['total'] > 0 else 0
-
-        for model_id, model_stats_in_tt in stats['by_model'].items():
-            model_stats_in_tt['success_rate'] = (model_stats_in_tt['success'] / model_stats_in_tt['total'] * 100) if model_stats_in_tt['total'] > 0 else 0
+        model_stats[display_name] = {
+            'model_id': model_id,
+            'config': config,
+            'display_name': display_name,
+            'total': total_instances,
+            'success': successful_instances,
+            'failure': total_instances - successful_instances,
+            'success_rate': success_rate,
+            'num_repetitions': num_reps,
+            'total_attempts': total_attempts,
+            'successful_attempts': successful_attempts,
+            'raw_success_rate': (successful_attempts / total_attempts * 100) if total_attempts > 0 else 0,
+            'traces': model_config_metadata[(model_id, config)]['traces']
+        }
 
     # Create summary
     summary = {
         'generated_at': datetime.now(timezone.utc).isoformat(),
         'total_traces': len(json_files),
         'models': model_stats,
-        'categories': category_stats,
-        'task_types': task_type_stats
     }
 
     # Write to output file
@@ -145,14 +147,19 @@ def aggregate_results(results_dir: Path, output_file: Path):
         json.dump(summary, f, indent=2)
 
     print(f"Aggregated {len(json_files)} traces")
-    print(f"Models found: {len(model_stats)}")
+    print(f"Model configurations found: {len(model_stats)}")
     print(f"Summary written to: {output_file}")
 
     # Print summary
     print("\n=== Leaderboard ===")
+    print(f"{'Model':<50} {'Success Rate':<15} {'Instances':<15} {'Raw Rate':<15}")
+    print("=" * 95)
     sorted_models = sorted(model_stats.items(), key=lambda x: x[1]['success_rate'], reverse=True)
-    for model_id, stats in sorted_models:
-        print(f"{model_id}: {stats['success_rate']:.1f}% ({stats['success']}/{stats['total']})")
+    for display_name, stats in sorted_models:
+        success_pct = f"{stats['success_rate']:.1f}%"
+        instances = f"{stats['success']}/{stats['total']}"
+        raw_pct = f"{stats['raw_success_rate']:.1f}% ({stats['successful_attempts']}/{stats['total_attempts']})"
+        print(f"{display_name:<50} {success_pct:<15} {instances:<15} {raw_pct:<15}")
 
 
 if __name__ == "__main__":

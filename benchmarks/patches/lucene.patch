@@ -1,0 +1,26 @@
+diff --git a/lucene/core/build.gradle b/lucene/core/build.gradle
+index e55c0853f61..dcca32d29a1 100644
+--- a/lucene/core/build.gradle
++++ b/lucene/core/build.gradle
+@@ -23,3 +23,8 @@ dependencies {
+   moduleTestImplementation project(':lucene:codecs')
+   moduleTestImplementation project(':lucene:test-framework')
+ }
++
++task copyDependencies(type: Copy) {
++  from configurations.moduleTestRuntimePath
++  into "build/dependency"
++}
+diff --git a/lucene/test-framework/src/java/org/apache/lucene/tests/util/LuceneTestCase.java b/lucene/test-framework/src/java/org/apache/lucene/tests/util/LuceneTestCase.java
+index c649fd18fa5..09cfe4fc6a3 100644
+--- a/lucene/test-framework/src/java/org/apache/lucene/tests/util/LuceneTestCase.java
++++ b/lucene/test-framework/src/java/org/apache/lucene/tests/util/LuceneTestCase.java
+@@ -255,7 +255,7 @@ import org.junit.runner.RunWith;
+ @TestMethodProviders({LuceneJUnit3MethodProvider.class, JUnit4MethodProvider.class})
+ @Listeners({RunListenerPrintReproduceInfo.class, FailureMarker.class})
+ @SeedDecorators({MixWithSuiteName.class}) // See LUCENE-3995 for rationale.
+-@ThreadLeakScope(Scope.SUITE)
++@ThreadLeakScope(ThreadLeakScope.Scope.NONE)
+ @ThreadLeakGroup(Group.MAIN)
+ @ThreadLeakAction({Action.WARN, Action.INTERRUPT})
+ // Wait long for leaked threads to complete before failure. zk needs this.

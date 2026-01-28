@@ -116,6 +116,35 @@ def run_task(
     print(f"Model: {model_id}")
     print(f"{'=' * 80}\n")
 
+    # Check if result already exists
+    sanitized_model_id = model_id.replace("/", "_").replace(":", "_")
+    fray_mode = "with_fray" if enable_fray_tools else "without_fray"
+
+    if repetition is not None:
+        task_results_dir = results_dir / sanitized_model_id / fray_mode / f"rep_{repetition}" / task_type / task_config.benchmark_category
+    else:
+        task_results_dir = results_dir / sanitized_model_id / fray_mode / task_type / task_config.benchmark_category
+
+    result_file = task_results_dir / f"{task_config.instance_id}.json"
+    patch_file = task_results_dir / f"{task_config.instance_id}.patch"
+
+    # Skip if both JSON and patch files exist and are not empty
+    json_exists = result_file.exists() and result_file.stat().st_size > 0
+    patch_exists = patch_file.exists() and patch_file.stat().st_size > 0
+
+    if json_exists and patch_exists:
+        print(f"✓ Skipping task - result already exists:")
+        print(f"  JSON: {result_file}")
+        print(f"  Patch: {patch_file}")
+        print(f"{'=' * 80}\n")
+        # Return a mock result indicating it was skipped
+        from concurrency_bench.tasks.task import TaskOutput
+        return TaskOutput(success=None, verify_output="Skipped - result already exists")
+    elif json_exists or patch_exists:
+        print(f"⚠️  Partial result exists (JSON: {json_exists}, Patch: {patch_exists}), will re-run task")
+    else:
+        print(f"No existing result found, running task...")
+
     # Setup workdir
     workdir = setup_workdir(task_config, base_path)
 
@@ -126,11 +155,11 @@ def run_task(
         if loader_class is None:
             raise ValueError(f"Unknown loader: {loader_name}")
 
-        # Real-world loaders (Kafka, Lucene, Guava) need additional parameters
+        # Real-world loaders need additional parameters
         if loader_name in [
             "KafkaLoader",
-            "LuceneLoader",
             "GuavaLoader",
+            "LuceneLoader",
             "UniffleLoader",
             "MercuryLoader",
         ]:
@@ -250,18 +279,7 @@ def run_task(
             "events": [event.model_dump() for event in conversation.state.events],
         }
 
-        # Sanitize model_id for use in directory name (replace / with _)
-        sanitized_model_id = model_id.replace("/", "_").replace(":", "_")
-
-        # Add with_fray or without_fray based on enable_fray_tools flag
-        fray_mode = "with_fray" if enable_fray_tools else "without_fray"
-
-        # Build results directory path
-        # Structure: results_dir/model_id/fray_mode/[rep_N/]task_type/benchmark_category/instance_id.json
-        if repetition is not None:
-            task_results_dir = results_dir / sanitized_model_id / fray_mode / f"rep_{repetition}" / task_type / task_config.benchmark_category
-        else:
-            task_results_dir = results_dir / sanitized_model_id / fray_mode / task_type / task_config.benchmark_category
+        # Create results directory (sanitized_model_id, fray_mode, task_results_dir already computed above)
         task_results_dir.mkdir(parents=True, exist_ok=True)
         result_file = task_results_dir / f"{task_config.instance_id}.json"
         with open(result_file, "w") as f:
@@ -381,6 +399,7 @@ def main():
 
     # Run tasks
     results = []
+    skipped = 0
 
     if args.max_workers == 1:
         # Sequential execution
@@ -398,13 +417,18 @@ def main():
                     keep_result=args.keep_result,
                     repetition=args.repetition,
                 )
-                results.append(
-                    {
-                        "instance_id": task.instance_id,
-                        "success": result.success,
-                    }
-                )
-                print(f"Completed: {task.instance_id} - Success: {result.success}")
+                if result.success is None:
+                    # Task was skipped
+                    skipped += 1
+                    print(f"Skipped: {task.instance_id}")
+                else:
+                    results.append(
+                        {
+                            "instance_id": task.instance_id,
+                            "success": result.success,
+                        }
+                    )
+                    print(f"Completed: {task.instance_id} - Success: {result.success}")
             except Exception as e:
                 tb = traceback.format_exc()
                 print(tb)
@@ -442,13 +466,18 @@ def main():
                 task = future_to_task[future]
                 try:
                     result = future.result()
-                    results.append(
-                        {
-                            "instance_id": task.instance_id,
-                            "success": result.success,
-                        }
-                    )
-                    print(f"Completed: {task.instance_id} - Success: {result.success}")
+                    if result.success is None:
+                        # Task was skipped
+                        skipped += 1
+                        print(f"Skipped: {task.instance_id}")
+                    else:
+                        results.append(
+                            {
+                                "instance_id": task.instance_id,
+                                "success": result.success,
+                            }
+                        )
+                        print(f"Completed: {task.instance_id} - Success: {result.success}")
                 except Exception as e:
                     tb = traceback.format_exc()
                     print(tb)
@@ -466,11 +495,14 @@ def main():
     print("SUMMARY")
     print(f"{'=' * 80}")
     successful = sum(1 for r in results if r["success"])
-    print(f"Total tasks: {len(results)}")
+    total_processed = len(results)
+    print(f"Total tasks loaded: {len(tasks)}")
+    print(f"Skipped (already completed): {skipped}")
+    print(f"Executed: {total_processed}")
     print(f"Successful: {successful}")
-    print(f"Failed: {len(results) - successful}")
+    print(f"Failed: {total_processed - successful}")
 
-    return 0 if successful == len(results) else 1
+    return 0 if successful == total_processed else 1
 
 
 if __name__ == "__main__":

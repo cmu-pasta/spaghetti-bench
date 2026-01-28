@@ -1,4 +1,6 @@
+from concurrency_bench.tasks.loaders.guava_loader import GuavaLoader
 from concurrency_bench.tasks.loaders.kafka_loader import KafkaLoader
+from concurrency_bench.tasks.loaders.lucene_loader import LuceneLoader
 from concurrency_bench.tasks.loaders.mercury_loader import MercuryLoader
 from concurrency_bench.tasks.loaders.real_world_junit_loader import RealWorldJUnitLoader
 from concurrency_bench.tasks.loaders.sctbench_loader import SCTBenchLoader
@@ -12,4 +14,6 @@ __all__ = [
     "KafkaLoader",
     "UniffleLoader",
     "MercuryLoader",
+    "GuavaLoader",
+    "LuceneLoader",
 ]
