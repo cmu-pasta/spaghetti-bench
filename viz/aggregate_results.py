@@ -17,18 +17,36 @@ def get_friendly_name(model_id):
         "bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0": "Claude 4.5 Sonnet",
         "bedrock_global.anthropic.claude-opus-4-5-20251101-v1_0": "Claude 4.5 Opus",
         "openai_gpt-5.2": "GPT-5.2",
-        "openai_gpt-5.1-codex": "GPT-5.2 Codex",
+        "openai_gpt-5.1-codex": "GPT-5.1 Codex",
         "gemini_gemini-3-pro-preview": "Gemini 3.0 Pro",
         "gemini_gemini-3-flash-preview": "Gemini 3.0 Flash",
         "bedrock_qwen.qwen3-coder-480b-a35b-v1_0": "Qwen 3 Coder",
-        "openai_gpt-4o": "GPT-4o",
-        "bedrock_us.meta.llama4-maverick-17b-instruct-v1_0": "Llama 4 Maverick 17B",
     }
     return mapping.get(model_id, model_id)
 
 
-def aggregate_results(results_dir: Path, output_file: Path):
+def load_canonical_tasks(tasks_file: Path):
+    """Load the canonical list of tasks from the JSONL file."""
+    tasks = {}
+    with open(tasks_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            task = json.loads(line)
+            tasks[task['instance_id']] = task
+    return tasks
+
+
+def aggregate_results(results_dir: Path, output_file: Path, tasks_file: Path):
     """Aggregate all trace results into a summary JSON file."""
+
+    # Load canonical task list
+    canonical_tasks = load_canonical_tasks(tasks_file)
+    print(f"Loaded {len(canonical_tasks)} canonical tasks from {tasks_file}")
+
+    # Build category lookup from canonical tasks
+    task_category = {tid: t.get('benchmark_category', 'unknown') for tid, t in canonical_tasks.items()}
 
     # Data structures for aggregation
     # Key: (model_id, config) -> instance_id -> [list of success values across reps]
@@ -40,6 +58,9 @@ def aggregate_results(results_dir: Path, output_file: Path):
         'config': None,
         'traces': []
     })
+
+    # Track which (model_id, config) combos exist and their repetition counts
+    model_config_reps = defaultdict(set)  # key -> set of rep IDs
 
     # Scan all JSON files
     json_files = list(results_dir.rglob("*.json"))
@@ -60,6 +81,8 @@ def aggregate_results(results_dir: Path, output_file: Path):
             if not parts[2].startswith("rep_"):
                 continue
 
+            rep_id = parts[2]
+
             with open(json_file, 'r') as f:
                 trace = json.load(f)
 
@@ -75,6 +98,7 @@ def aggregate_results(results_dir: Path, output_file: Path):
             # Store result by model+config+instance
             key = (model_id, config)
             instance_results[key][instance_id].append(success)
+            model_config_reps[key].add(rep_id)
 
             # Store metadata
             if model_config_metadata[key]['model_id'] is None:
@@ -96,43 +120,79 @@ def aggregate_results(results_dir: Path, output_file: Path):
     # Now compute averaged statistics for each model+config combination
     model_stats = {}
 
-    for (model_id, config), instances in instance_results.items():
+    for key, instances in instance_results.items():
+        model_id, config = key
+        num_reps = len(model_config_reps[key])
+
         # Create display name
         friendly_name = get_friendly_name(model_id)
         config_display = config.replace("_", " ")
         display_name = f"{friendly_name} ({config_display})"
 
-        # Compute average success rate per instance
-        total_instances = len(instances)
-        successful_instances = 0
+        # Fill in missing tasks as failures (False for each rep)
+        for task_id in canonical_tasks:
+            if task_id not in instances:
+                instances[task_id] = [False] * num_reps
+
+        # Compute success rates over all canonical tasks
+        total_instances = len(canonical_tasks)
+        successful_instances_pass5 = 0
         total_attempts = 0
         successful_attempts = 0
 
-        for instance_id, successes in instances.items():
+        # Per-category tracking
+        cat_total_attempts = defaultdict(int)
+        cat_successful_attempts = defaultdict(int)
+        cat_total_instances = defaultdict(int)
+        cat_pass5 = defaultdict(int)
+
+        for task_id in canonical_tasks:
+            successes = instances.get(task_id, [False] * num_reps)
+            category = task_category[task_id]
+
             total_attempts += len(successes)
             successful_attempts += sum(successes)
-            # Average over repetitions for this instance
-            avg_success = sum(successes) / len(successes) if successes else 0
-            # Count as successful if average is > 0.5 (majority of reps succeeded)
-            if avg_success > 0.5:
-                successful_instances += 1
+            cat_total_attempts[category] += len(successes)
+            cat_successful_attempts[category] += sum(successes)
+            cat_total_instances[category] += 1
 
-        success_rate = (successful_instances / total_instances * 100) if total_instances > 0 else 0
-        num_reps = len(list(instances.values())[0]) if instances else 0
+            if any(successes):
+                successful_instances_pass5 += 1
+                cat_pass5[category] += 1
+
+        # Pass@1: Average success rate across all individual attempts
+        pass1_rate = (successful_attempts / total_attempts * 100) if total_attempts > 0 else 0
+        pass5_rate = (successful_instances_pass5 / total_instances * 100) if total_instances > 0 else 0
+
+        # Compute per-category stats
+        by_category = {}
+        for category in set(task_category.values()):
+            ct = cat_total_instances[category]
+            cta = cat_total_attempts[category]
+            csa = cat_successful_attempts[category]
+            cp5 = cat_pass5[category]
+            by_category[category] = {
+                'total': ct,
+                'total_attempts': cta,
+                'successful_attempts': csa,
+                'pass1_rate': (csa / cta * 100) if cta > 0 else 0,
+                'pass5_success': cp5,
+                'pass5_rate': (cp5 / ct * 100) if ct > 0 else 0,
+            }
 
         model_stats[display_name] = {
             'model_id': model_id,
             'config': config,
             'display_name': display_name,
             'total': total_instances,
-            'success': successful_instances,
-            'failure': total_instances - successful_instances,
-            'success_rate': success_rate,
+            'success_rate': pass1_rate,  # Pass@1: average of single attempts
+            'pass5_success': successful_instances_pass5,
+            'pass5_rate': pass5_rate,
             'num_repetitions': num_reps,
             'total_attempts': total_attempts,
             'successful_attempts': successful_attempts,
-            'raw_success_rate': (successful_attempts / total_attempts * 100) if total_attempts > 0 else 0,
-            'traces': model_config_metadata[(model_id, config)]['traces']
+            'by_category': by_category,
+            'traces': model_config_metadata[key]['traces']
         }
 
     # Create summary
@@ -152,22 +212,23 @@ def aggregate_results(results_dir: Path, output_file: Path):
 
     # Print summary
     print("\n=== Leaderboard ===")
-    print(f"{'Model':<50} {'Success Rate':<15} {'Instances':<15} {'Raw Rate':<15}")
-    print("=" * 95)
+    print(f"{'Model':<50} {'Pass@1':<15} {'Pass@5':<15} {'Attempts':<20}")
+    print("=" * 100)
     sorted_models = sorted(model_stats.items(), key=lambda x: x[1]['success_rate'], reverse=True)
     for display_name, stats in sorted_models:
-        success_pct = f"{stats['success_rate']:.1f}%"
-        instances = f"{stats['success']}/{stats['total']}"
-        raw_pct = f"{stats['raw_success_rate']:.1f}% ({stats['successful_attempts']}/{stats['total_attempts']})"
-        print(f"{display_name:<50} {success_pct:<15} {instances:<15} {raw_pct:<15}")
+        pass1_pct = f"{stats['success_rate']:.1f}%"
+        pass5_pct = f"{stats['pass5_rate']:.1f}%"
+        attempts = f"{stats['successful_attempts']}/{stats['total_attempts']}"
+        print(f"{display_name:<50} {pass1_pct:<15} {pass5_pct:<15} {attempts:<20}")
 
 
 if __name__ == "__main__":
     import sys
 
     script_dir = Path(__file__).resolve().parent
-    results_dir = script_dir.parent / "results"
+    results_dir = script_dir.parent / "results_reverified"
     output_file = script_dir / "leaderboard_data.json"
+    tasks_file = script_dir.parent / "src" / "concurrency_bench" / "all.jsonl"
 
     if len(sys.argv) > 1:
         results_dir = Path(sys.argv[1])
@@ -176,4 +237,8 @@ if __name__ == "__main__":
         print(f"Error: Results directory not found: {results_dir}")
         sys.exit(1)
 
-    aggregate_results(results_dir, output_file)
+    if not tasks_file.exists():
+        print(f"Error: Tasks file not found: {tasks_file}")
+        sys.exit(1)
+
+    aggregate_results(results_dir, output_file, tasks_file)

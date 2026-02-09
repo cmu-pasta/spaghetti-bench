@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spaghetti Bench - Leaderboard</title>
+    <title>Leaderboard - Spaghetti Bench</title>
     <style>
         * {
             margin: 0;
@@ -15,6 +15,60 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
             background: #f5f5f5;
             color: #333;
+            padding: 0;
+        }
+
+        .nav-bar {
+            background: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            color: #333;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-link.primary {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .nav-link.primary:hover {
+            background: #5a6fd6;
+        }
+
+        .page-content {
             padding: 20px;
         }
 
@@ -100,6 +154,15 @@
             font-size: 15px;
         }
 
+        .model-link {
+            color: #1976d2;
+            text-decoration: none;
+        }
+
+        .model-link:hover {
+            text-decoration: underline;
+        }
+
         .percentage {
             font-size: 20px;
             font-weight: 600;
@@ -109,28 +172,11 @@
         .percentage.medium { color: #ff9800; }
         .percentage.low { color: #f44336; }
 
-        .stats {
-            font-size: 14px;
+        .date {
+            font-size: 13px;
             color: #666;
+            font-family: 'Monaco', 'Menlo', monospace;
         }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 4px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            transition: width 0.3s ease;
-        }
-
-        .progress-fill.high { background: #4caf50; }
-        .progress-fill.medium { background: #ff9800; }
-        .progress-fill.low { background: #f44336; }
 
         .category-grid {
             display: grid;
@@ -236,15 +282,25 @@
     </style>
 </head>
 <body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">🍝 Spaghetti Bench</a>
+        <div class="nav-links">
+            <a href="/leaderboard" class="nav-link">Leaderboard</a>
+            <a href="/blog" class="nav-link">Blog</a>
+        </div>
+    </nav>
+    <div class="page-content">
     <div class="container">
         <header>
-            <h1>🍝 Spaghetti Bench Leaderboard</h1>
+            <h1>Leaderboard</h1>
             <div class="subtitle">AI Agent Performance on Concurrency Bug Tasks</div>
             <div class="last-updated" id="lastUpdated">Loading...</div>
         </header>
 
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('overall')">Overall</div>
+            <div class="tab active" data-filter="all" onclick="switchCategory('all')">All</div>
+            <div class="tab" data-filter="sctbench" onclick="switchCategory('sctbench')">SCTBench</div>
+            <div class="tab" data-filter="real-world" onclick="switchCategory('real-world')">Real-World</div>
         </div>
 
         <div id="content">
@@ -255,6 +311,7 @@
     <script>
         let leaderboardData = null;
         let currentTab = 'overall';
+        let categoryFilter = 'all';  // 'all', 'sctbench', or 'real-world'
 
         // Load data on page load
         window.addEventListener('DOMContentLoaded', loadData);
@@ -284,6 +341,13 @@
             renderLeaderboard();
         }
 
+        function switchCategory(category) {
+            categoryFilter = category;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-filter="${category}"]`).classList.add('active');
+            renderLeaderboard();
+        }
+
         function renderLeaderboard() {
             if (!leaderboardData) return;
 
@@ -304,33 +368,47 @@
         }
 
         function renderOverallLeaderboard() {
+            // Get stats based on category filter
             const models = Object.entries(leaderboardData.models)
-                .sort((a, b) => b[1].success_rate - a[1].success_rate);
+                .map(([modelId, stats]) => {
+                    if (categoryFilter === 'all') {
+                        return [modelId, stats, stats.success_rate, stats.pass5_rate];
+                    } else {
+                        const catStats = stats.by_category?.[categoryFilter];
+                        if (!catStats || catStats.total === 0) {
+                            return null;  // Model has no data for this category
+                        }
+                        return [modelId, stats, catStats.pass1_rate, catStats.pass5_rate, catStats];
+                    }
+                })
+                .filter(x => x !== null)
+                .sort((a, b) => b[2] - a[2]);  // Sort by pass1 rate
+
+            const categoryTitle = categoryFilter === 'all' ? 'All Categories' :
+                                  categoryFilter === 'sctbench' ? 'SCTBench' : 'Real-World';
 
             let html = '<div class="section">';
-            html += '<div class="section-title">Model Rankings</div>';
+            html += `<div class="section-title">Model Rankings - ${categoryTitle}</div>`;
             html += '<table><thead><tr>';
-            html += '<th>Rank</th><th>Model</th><th>Success Rate</th><th>Results</th><th>Progress</th>';
+            html += '<th>Rank</th><th>Model</th><th>Pass@1</th><th>Pass@5</th>';
             html += '</tr></thead><tbody>';
 
-            models.forEach(([modelId, stats], index) => {
+            models.forEach(([modelId, stats, pass1Rate, pass5Rate, catStats], index) => {
                 const rank = index + 1;
                 const rankClass = rank <= 3 ? `rank-${rank}` : '';
-                const percentClass = getPercentClass(stats.success_rate);
+                const percentClass = getPercentClass(pass1Rate);
+                const pass5Class = getPercentClass(pass5Rate || 0);
+                // Use raw model_id and config for filtering (these are stored in the stats)
+                const filterKey = `${stats.model_id}/${stats.config}`;
+                // Include category filter if not 'all'
+                const categoryParam = categoryFilter !== 'all' ? `&category=${encodeURIComponent(categoryFilter)}` : '';
+                const modelLink = `/traces?model=${encodeURIComponent(filterKey)}${categoryParam}`;
 
                 html += '<tr>';
                 html += `<td class="rank ${rankClass}">#${rank}</td>`;
-                html += `<td class="model-name">${escapeHtml(modelId)}</td>`;
-                html += `<td><span class="percentage ${percentClass}">${stats.success_rate.toFixed(1)}%</span></td>`;
-                html += `<td class="stats">
-                    <span class="badge success">${stats.success} passed</span>
-                    <span class="badge total">${stats.total} total</span>
-                </td>`;
-                html += `<td style="min-width: 200px;">
-                    <div class="progress-bar">
-                        <div class="progress-fill ${percentClass}" style="width: ${stats.success_rate}%"></div>
-                    </div>
-                </td>`;
+                html += `<td class="model-name"><a href="${modelLink}" class="model-link">${escapeHtml(modelId)}</a></td>`;
+                html += `<td><span class="percentage ${percentClass}">${pass1Rate.toFixed(1)}%</span></td>`;
+                html += `<td><span class="percentage ${pass5Class}">${(pass5Rate || 0).toFixed(1)}%</span></td>`;
                 html += '</tr>';
             });
 
@@ -416,5 +494,7 @@
             return div.innerHTML;
         }
     </script>
+    </div>
+    </div>
 </body>
 </html>

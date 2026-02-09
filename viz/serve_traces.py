@@ -15,9 +15,11 @@ import mimetypes
 PORT = 8001
 # Use absolute path resolution to avoid issues with working directory changes
 SCRIPT_DIR = Path(__file__).resolve().parent
-RESULTS_DIR = SCRIPT_DIR.parent / "results"
+RESULTS_DIR = SCRIPT_DIR.parent / "results_reverified"
+INDEX_PATH = SCRIPT_DIR / "index.html"
 VISUALIZER_PATH = SCRIPT_DIR / "trace_visualizer.html"
 LEADERBOARD_PATH = SCRIPT_DIR / "leaderboard.html"
+BLOG_PATH = SCRIPT_DIR / "blog.html"
 LEADERBOARD_DATA_PATH = SCRIPT_DIR / "leaderboard_data.json"
 
 
@@ -28,8 +30,13 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
 
         print(f"[REQUEST] {self.command} {path}")
 
-        # Serve the main visualizer page
+        # Serve the home page
         if path == "/" or path == "/index.html":
+            self.serve_index()
+            return
+
+        # Serve the trace visualizer (examples)
+        if path == "/traces":
             self.serve_visualizer()
             return
 
@@ -38,9 +45,17 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
             self.serve_leaderboard()
             return
 
-        # API endpoint to list all traces
+        # Serve the blog page
+        if path == "/blog" or path == "/blog.html":
+            self.serve_blog()
+            return
+
+        # API endpoint to list all traces (supports ?model= and ?category= filters)
         if path == "/api/traces":
-            self.list_traces()
+            query = parse_qs(parsed_path.query)
+            model_filter = query.get('model', [None])[0]
+            category_filter = query.get('category', [None])[0]
+            self.list_traces(model_filter, category_filter)
             return
 
         # Serve leaderboard data
@@ -64,6 +79,25 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
         print(f"[REQUEST] Falling through to static file handler for: {path}")
         super().do_GET()
 
+    def serve_index(self):
+        """Serve the home page."""
+        try:
+            if not INDEX_PATH.exists():
+                # Fall back to visualizer if no index
+                self.serve_visualizer()
+                return
+
+            with open(INDEX_PATH, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.send_header('Content-Length', len(content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(content.encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, f"Error serving index: {str(e)}")
+
     def serve_visualizer(self):
         """Serve the trace visualizer HTML with API support."""
         try:
@@ -75,22 +109,59 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
     <script>
         let fileMetadata = new Map(); // Track file paths and their modification times
         let pollInterval = null;
+        let modelFilter = null; // Filter traces by model
+        let categoryFilter = null; // Filter traces by category (sctbench, real-world)
+
+        // Get filters from URL query parameters
+        function getModelFilter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('model');
+        }
+
+        function getCategoryFilter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('category');
+        }
 
         // Auto-load traces from API on page load
         window.addEventListener('DOMContentLoaded', () => {
+            modelFilter = getModelFilter();
+            categoryFilter = getCategoryFilter();
+            if (modelFilter || categoryFilter) {
+                // Update the page title to show filters
+                const header = document.querySelector('.sidebar-header h1');
+                if (header) {
+                    let title = 'Traces';
+                    if (modelFilter) {
+                        title = modelFilter.split('/').pop();
+                    }
+                    if (categoryFilter) {
+                        title += ` (${categoryFilter})`;
+                    }
+                    header.innerHTML = `${title}<span class="status-indicator" id="statusIndicator"></span>`;
+                }
+            }
             loadTracesFromAPI();
-            // Start polling for changes every 2 seconds
-            pollInterval = setInterval(checkForUpdates, 2000);
+            // Start polling for changes every 2 seconds (only when not filtering)
+            if (!modelFilter && !categoryFilter) {
+                pollInterval = setInterval(checkForUpdates, 2000);
+            }
         });
 
         async function loadTracesFromAPI() {
             try {
                 if (typeof setLoadingStatus === 'function') setLoadingStatus(true);
 
-                console.log('Fetching traces from /api/traces...');
-                const response = await fetch('/api/traces');
+                // Pass filters to API to reduce number of traces to load
+                let apiUrl = '/api/traces';
+                const params = [];
+                if (modelFilter) params.push(`model=${encodeURIComponent(modelFilter)}`);
+                if (categoryFilter) params.push(`category=${encodeURIComponent(categoryFilter)}`);
+                if (params.length > 0) apiUrl += '?' + params.join('&');
+                console.log('Fetching traces from', apiUrl);
+                const response = await fetch(apiUrl);
                 console.log('Response status:', response.status);
-                const traceFiles = await response.json();
+                let traceFiles = await response.json();
                 console.log('Found', traceFiles.length, 'trace files');
 
                 if (traceFiles.length === 0) {
@@ -108,7 +179,7 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
                 });
 
                 console.log('Loading individual trace files...');
-                const loadedTraces = await Promise.all(
+                let loadedTraces = await Promise.all(
                     traceFiles.map(async (file, index) => {
                         console.log(`Loading ${index + 1}/${traceFiles.length}: ${file.path}`);
                         const res = await fetch(`/api/trace/${encodeURIComponent(file.path)}`);
@@ -122,16 +193,20 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
 
                 console.log('Successfully loaded', loadedTraces.length, 'traces');
                 traces = loadedTraces;
+                if (typeof updateRepFilterOptions === 'function') updateRepFilterOptions();
                 renderTraceList();
 
-                // Check if there's a trace specified in the URL hash
-                if (window.location.hash.startsWith('#trace/')) {
-                    if (typeof loadTraceFromUrl === 'function') {
-                        loadTraceFromUrl();
+                // Only auto-select first trace on initial load, not on reloads
+                if (!currentTrace && traces.length > 0) {
+                    // Check if there's a trace specified in the URL hash
+                    if (window.location.hash.startsWith('#trace/')) {
+                        if (typeof loadTraceFromUrl === 'function') {
+                            loadTraceFromUrl();
+                        }
+                    } else {
+                        console.log('Selecting first trace (initial load)');
+                        selectTrace(0);
                     }
-                } else if (traces.length > 0 && !currentTrace) {
-                    console.log('Selecting first trace');
-                    selectTrace(0);
                 }
 
                 if (typeof setLoadingStatus === 'function') setLoadingStatus(false);
@@ -216,6 +291,24 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self.send_error(500, f"Error serving leaderboard: {str(e)}")
 
+    def serve_blog(self):
+        """Serve the blog HTML page."""
+        try:
+            if not BLOG_PATH.exists():
+                self.send_error(404, "Blog page not found")
+                return
+
+            with open(BLOG_PATH, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.send_header('Content-Length', len(content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(content.encode('utf-8'))
+        except Exception as e:
+            self.send_error(500, f"Error serving blog: {str(e)}")
+
     def serve_leaderboard_data(self):
         """Serve the leaderboard data JSON."""
         try:
@@ -234,21 +327,36 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self.send_error(500, f"Error serving leaderboard data: {str(e)}")
 
-    def list_traces(self):
+    def list_traces(self, model_filter=None, category_filter=None):
         """List all trace JSON files in the results directory."""
         try:
             traces = []
 
             print(f"[API] Listing traces from: {RESULTS_DIR}")
             print(f"[API] Directory exists: {RESULTS_DIR.exists()}")
+            if model_filter:
+                print(f"[API] Model filter: {model_filter}")
+            if category_filter:
+                print(f"[API] Category filter: {category_filter}")
 
             if RESULTS_DIR.exists():
                 for json_file in RESULTS_DIR.rglob("*.json"):
                     rel_path = json_file.relative_to(RESULTS_DIR)
+                    rel_path_str = str(rel_path)
+
+                    # Apply model filter if provided (filter format: "model_id/config")
+                    if model_filter and not rel_path_str.startswith(model_filter + '/'):
+                        continue
+
+                    # Apply category filter if provided (check if category is in path)
+                    # Categories appear in path as .../fix_bug/sctbench/... or .../fix_bug/real-world/...
+                    if category_filter and f'/{category_filter}/' not in rel_path_str:
+                        continue
+
                     stat = json_file.stat()
                     traces.append({
                         "name": json_file.name,
-                        "path": str(rel_path),
+                        "path": rel_path_str,
                         "full_path": str(json_file),
                         "size": stat.st_size,
                         "modified": stat.st_mtime

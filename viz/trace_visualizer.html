@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Trace Visualizer</title>
+    <title>Examples - Spaghetti Bench</title>
     <style>
         * {
             margin: 0;
@@ -17,9 +17,59 @@
             color: #333;
         }
 
+        .nav-bar {
+            background: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            color: #333;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-link.primary {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .nav-link.primary:hover {
+            background: #5a6fd6;
+        }
+
         .container {
             display: flex;
-            height: 100vh;
+            height: calc(100vh - 48px);
         }
 
         .sidebar {
@@ -434,6 +484,33 @@
             border-color: #2196f3;
         }
 
+        .filter-box {
+            padding: 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-box label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .filter-box select {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        .filter-box select:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
         .loading {
             display: flex;
             align-items: center;
@@ -511,14 +588,27 @@
     </style>
 </head>
 <body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">🍝 Spaghetti Bench</a>
+        <div class="nav-links">
+            <a href="/leaderboard" class="nav-link">Leaderboard</a>
+            <a href="/blog" class="nav-link">Blog</a>
+        </div>
+    </nav>
     <div class="container">
         <div class="sidebar">
             <div class="sidebar-header">
-                <h1>Agent Trace Visualizer<span class="status-indicator" id="statusIndicator"></span></h1>
+                <h1>Traces<span class="status-indicator" id="statusIndicator"></span></h1>
                 <div class="auto-reload-label" id="autoReloadLabel">Auto-reload enabled</div>
                 <div class="file-input-wrapper">
                     <input type="file" id="fileInput" accept=".json" multiple>
                 </div>
+            </div>
+            <div class="filter-box" id="repFilterBox" style="display: none;">
+                <label for="repFilter">Repetition:</label>
+                <select id="repFilter">
+                    <option value="all">All</option>
+                </select>
             </div>
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Search traces...">
@@ -558,6 +648,7 @@
         let traces = [];
         let currentTrace = null;
         let collapsedStates = new Set();
+        let selectedRep = 'all';
 
         const fileInput = document.getElementById('fileInput');
         const traceList = document.getElementById('traceList');
@@ -565,9 +656,41 @@
         const searchInput = document.getElementById('searchInput');
         const statusIndicator = document.getElementById('statusIndicator');
         const autoReloadLabel = document.getElementById('autoReloadLabel');
+        const repFilter = document.getElementById('repFilter');
+        const repFilterBox = document.getElementById('repFilterBox');
 
         fileInput.addEventListener('change', handleFileSelect);
         searchInput.addEventListener('input', handleSearch);
+        repFilter.addEventListener('change', handleRepFilter);
+
+        function handleRepFilter(e) {
+            selectedRep = e.target.value;
+            renderTraceList(searchInput.value);
+        }
+
+        function updateRepFilterOptions() {
+            // Extract unique repetition IDs from trace paths
+            const reps = new Set();
+            traces.forEach(trace => {
+                const path = trace._path || '';
+                const match = path.match(/rep_(\d+)/);
+                if (match) {
+                    reps.add(match[1]);
+                }
+            });
+
+            // Sort numerically
+            const sortedReps = Array.from(reps).sort((a, b) => parseInt(a) - parseInt(b));
+
+            // Show filter if there are multiple reps
+            if (sortedReps.length > 1) {
+                repFilterBox.style.display = 'flex';
+                repFilter.innerHTML = '<option value="all">All</option>' +
+                    sortedReps.map(r => `<option value="${r}">Rep ${r}</option>`).join('');
+            } else {
+                repFilterBox.style.display = 'none';
+            }
+        }
 
         function setLoadingStatus(isLoading) {
             if (statusIndicator) {
@@ -606,6 +729,7 @@
                 });
             })).then(loadedTraces => {
                 traces = loadedTraces;
+                updateRepFilterOptions();
                 renderTraceList();
 
                 // Check if there's a trace specified in the URL hash
@@ -629,6 +753,15 @@
 
         function renderTraceList(searchQuery = '') {
             const filteredTraces = traces.filter(trace => {
+                // Filter by repetition
+                if (selectedRep !== 'all') {
+                    const path = trace._path || '';
+                    const match = path.match(/rep_(\d+)/);
+                    if (!match || match[1] !== selectedRep) {
+                        return false;
+                    }
+                }
+                // Filter by search query
                 if (!searchQuery) return true;
                 const searchText = `${trace.instance_id} ${trace.description} ${trace.task_type} ${trace.benchmark_category}`.toLowerCase();
                 return searchText.includes(searchQuery);
@@ -1126,12 +1259,29 @@
         }
 
         function toggleCollapse(id) {
-            if (collapsedStates.has(id)) {
+            const isCollapsed = collapsedStates.has(id);
+            if (isCollapsed) {
                 collapsedStates.delete(id);
             } else {
                 collapsedStates.add(id);
             }
-            renderTrace();
+
+            // Toggle visibility without re-rendering the whole trace
+            // Find the event header that was clicked and toggle its sibling body
+            const eventBodies = document.querySelectorAll('.event-body');
+            const collapseIcons = document.querySelectorAll('.collapse-icon');
+
+            // Find elements by matching the onclick handler's id
+            eventBodies.forEach((body, index) => {
+                const header = body.previousElementSibling;
+                if (header && header.getAttribute('onclick') === `toggleCollapse('${id}')`) {
+                    body.classList.toggle('collapsed', !isCollapsed);
+                    const icon = header.querySelector('.collapse-icon');
+                    if (icon) {
+                        icon.classList.toggle('collapsed', !isCollapsed);
+                    }
+                }
+            });
         }
 
         function formatTimestamp(timestamp) {
