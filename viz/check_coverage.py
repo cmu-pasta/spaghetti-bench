@@ -10,7 +10,6 @@ EXPECTED_MODELS = [
     "bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0",  # Claude 4.5 Sonnet
     "bedrock_global.anthropic.claude-opus-4-5-20251101-v1_0",    # Claude 4.5 Opus
     "openai_gpt-5.2",                                             # GPT-5.2
-    "openai_gpt-5.1-codex",                                       # GPT-5.2 Codex (note: says 5.1)
     "gemini_gemini-3-pro-preview",                                # Gemini 3.0 Pro
     "gemini_gemini-3-flash-preview",                              # Gemini 3.0 Flash
     "bedrock_qwen.qwen3-coder-480b-a35b-v1_0",                   # Qwen 3 Coder
@@ -26,7 +25,6 @@ def get_friendly_name(model_id):
         "bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0": "Claude 4.5 Sonnet",
         "bedrock_global.anthropic.claude-opus-4-5-20251101-v1_0": "Claude 4.5 Opus",
         "openai_gpt-5.2": "GPT-5.2",
-        "openai_gpt-5.1-codex": "GPT-5.2 Codex",
         "gemini_gemini-3-pro-preview": "Gemini 3.0 Pro",
         "gemini_gemini-3-flash-preview": "Gemini 3.0 Flash",
         "bedrock_qwen.qwen3-coder-480b-a35b-v1_0": "Qwen 3 Coder",
@@ -34,7 +32,7 @@ def get_friendly_name(model_id):
     return mapping.get(model_id, model_id)
 
 def main():
-    results_dir = Path(__file__).parent.parent / "results"
+    results_dir = Path(__file__).parent.parent / "results_reverified"
 
     # Scan results directory
     coverage = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))

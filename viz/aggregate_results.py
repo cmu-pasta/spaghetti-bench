@@ -49,8 +49,8 @@ def aggregate_results(results_dir: Path, output_file: Path, tasks_file: Path):
     task_category = {tid: t.get('benchmark_category', 'unknown') for tid, t in canonical_tasks.items()}
 
     # Data structures for aggregation
-    # Key: (model_id, config) -> instance_id -> [list of success values across reps]
-    instance_results = defaultdict(lambda: defaultdict(list))
+    # Key: (model_id, config) -> instance_id -> {rep_id: success}
+    instance_results = defaultdict(lambda: defaultdict(dict))
 
     # Store metadata for each model+config combo
     model_config_metadata = defaultdict(lambda: {
@@ -95,9 +95,9 @@ def aggregate_results(results_dir: Path, output_file: Path, tasks_file: Path):
             # Relative path from results dir
             rel_path = json_file.relative_to(results_dir)
 
-            # Store result by model+config+instance
+            # Store result by model+config+instance+rep
             key = (model_id, config)
-            instance_results[key][instance_id].append(success)
+            instance_results[key][instance_id][rep_id] = success
             model_config_reps[key].add(rep_id)
 
             # Store metadata
@@ -122,17 +122,22 @@ def aggregate_results(results_dir: Path, output_file: Path, tasks_file: Path):
 
     for key, instances in instance_results.items():
         model_id, config = key
-        num_reps = len(model_config_reps[key])
+        rep_ids = sorted(model_config_reps[key])
+        num_reps = len(rep_ids)
 
         # Create display name
         friendly_name = get_friendly_name(model_id)
         config_display = config.replace("_", " ")
         display_name = f"{friendly_name} ({config_display})"
 
-        # Fill in missing tasks as failures (False for each rep)
+        # Ensure every task has results for every rep (fill missing as False)
         for task_id in canonical_tasks:
             if task_id not in instances:
-                instances[task_id] = [False] * num_reps
+                instances[task_id] = {}
+            # Fill in missing reps for this task
+            for rep_id in rep_ids:
+                if rep_id not in instances[task_id]:
+                    instances[task_id][rep_id] = False
 
         # Compute success rates over all canonical tasks
         total_instances = len(canonical_tasks)
@@ -147,7 +152,8 @@ def aggregate_results(results_dir: Path, output_file: Path, tasks_file: Path):
         cat_pass5 = defaultdict(int)
 
         for task_id in canonical_tasks:
-            successes = instances.get(task_id, [False] * num_reps)
+            # Convert dict to list of results in rep order
+            successes = [instances[task_id][rep_id] for rep_id in rep_ids]
             category = task_category[task_id]
 
             total_attempts += len(successes)
