@@ -287,6 +287,7 @@
         <div class="nav-links">
             <a href="./leaderboard.html" class="nav-link">Leaderboard</a>
             <a href="./blog.html" class="nav-link">Blog</a>
+            <a href="https://github.com/cmu-pasta/spaghetti-bench" class="nav-link" target="_blank">GitHub</a>
         </div>
     </nav>
     <div class="page-content">
@@ -300,7 +301,7 @@
         <div class="tabs">
             <div class="tab active" data-filter="all" onclick="switchCategory('all')">All</div>
             <div class="tab" data-filter="sctbench" onclick="switchCategory('sctbench')">SCTBench</div>
-            <div class="tab" data-filter="real-world" onclick="switchCategory('real-world')">Real-World</div>
+            <div class="tab" data-filter="real-world" onclick="switchCategory('real-world')">Kafka</div>
         </div>
 
         <div id="content">
@@ -385,7 +386,7 @@
                 .sort((a, b) => b[2] - a[2]);  // Sort by pass1 rate
 
             const categoryTitle = categoryFilter === 'all' ? 'All Categories' :
-                                  categoryFilter === 'sctbench' ? 'SCTBench' : 'Real-World';
+                                  categoryFilter === 'sctbench' ? 'SCTBench' : 'Kafka';
 
             let html = '<div class="section">';
             html += `<div class="section-title">Model Rankings - ${categoryTitle}</div>`;
