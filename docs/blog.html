@@ -267,7 +267,7 @@
             <h1>Spaghetti Bench: Evaluating AI Agents on Concurrency Bug Fixes</h1>
             <div class="post-meta">
                 <div>Vasu Vikram, Ao Li, Rohan Padhye</div>
-                <div style="margin-top: 4px;">February 8, 2026 • 10 min read</div>
+                <div style="margin-top: 4px;">February 13, 2026 • 10 min read</div>
             </div>
 
             <p>
@@ -416,7 +416,7 @@ AssertionError at WorkStealQueue$ObjType.check</code></pre>
             </p>
             <p>
                 We can contrast this with the same model on the same task with Fray access. Over the course
-                of 5 refinements of its solution with Fray, the agent produced a <a href="/traces?model=bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0%2Fwith_fray&category=sctbench#trace/bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0/with_fray/rep_3/fix_bug/sctbench/WorkStealQueue.json">comprehensive fix</a> addressing multiple race conditions:
+                of 5 refinements of its solution with Fray, the agent produced a <a href="/traces.html?model=bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0%2Fwith_fray&category=sctbench#trace/bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0/with_fray/rep_3/fix_bug/sctbench/WorkStealQueue.json">comprehensive fix</a> addressing multiple race conditions:
             </p>
 
             <ul style="margin-left: 32px; margin-bottom: 20px;">
@@ -546,10 +546,6 @@ private void addToRestoredTasks(final StreamTask task) {
 
             <h3>SCTBench Performance (28 tasks)</h3>
 
-            <p style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; color: #856404;">
-                <strong>TODO:</strong> Update numbers and text for final data.
-            </p>
-
             <p>
                 On single program benchmarks from SCTBench, Fray provides significant improvements across all models:
             </p>
@@ -601,8 +597,6 @@ private void addToRestoredTasks(final StreamTask task) {
                 The improvements are substantial, particularly for top-tier models. Fray helps catch false positives where
                 agents produce patches that seem correct but fail under systematic testing. The WorkStealQueue example
                 demonstrates this pattern clearly.
-
-                TODO: why gemini decreases?
             </p>
 
             <h3>Real-World Kafka Performance (11 tasks)</h3>
