@@ -127,8 +127,10 @@ def aggregate_results(results_dir: Path, output_file: Path, tasks_file: Path):
 
         # Create display name
         friendly_name = get_friendly_name(model_id)
-        config_display = config.replace("_", " ")
-        display_name = f"{friendly_name} ({config_display})"
+        if config == "with_fray":
+            display_name = f"{friendly_name} (+Fray)"
+        else:
+            display_name = friendly_name
 
         # Ensure every task has results for every rep (fill missing as False)
         for task_id in canonical_tasks:
@@ -232,7 +234,7 @@ if __name__ == "__main__":
     import sys
 
     script_dir = Path(__file__).resolve().parent
-    results_dir = script_dir.parent / "results_reverified"
+    results_dir = script_dir.parent / "results"
     output_file = script_dir / "leaderboard_data.json"
     tasks_file = script_dir.parent / "src" / "concurrency_bench" / "all.jsonl"
 

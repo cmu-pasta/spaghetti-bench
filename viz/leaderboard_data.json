@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-02-09T17:30:33.212083+00:00",
-  "total_traces": 2181,
+  "generated_at": "2026-02-13T13:48:24.629543+00:00",
+  "total_traces": 2067,
   "models": {
-    "GPT-5.2 (with fray)": {
+    "GPT-5.2 (+Fray)": {
       "model_id": "openai_gpt-5.2",
       "config": "with_fray",
-      "display_name": "GPT-5.2 (with fray)",
+      "display_name": "GPT-5.2 (+Fray)",
       "total": 39,
       "success_rate": 84.1025641025641,
       "pass5_success": 36,
@@ -14,14 +14,6 @@
       "total_attempts": 195,
       "successful_attempts": 164,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 140,
-          "pass1_rate": 100.0,
-          "pass5_success": 28,
-          "pass5_rate": 100.0
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -29,6 +21,14 @@
           "pass1_rate": 43.63636363636363,
           "pass5_success": 8,
           "pass5_rate": 72.72727272727273
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 140,
+          "pass1_rate": 100.0,
+          "pass5_success": 28,
+          "pass5_rate": 100.0
         }
       },
       "traces": [
@@ -1343,10 +1343,10 @@
         }
       ]
     },
-    "GPT-5.2 (without fray)": {
+    "GPT-5.2": {
       "model_id": "openai_gpt-5.2",
       "config": "without_fray",
-      "display_name": "GPT-5.2 (without fray)",
+      "display_name": "GPT-5.2",
       "total": 39,
       "success_rate": 74.87179487179488,
       "pass5_success": 32,
@@ -1355,14 +1355,6 @@
       "total_attempts": 195,
       "successful_attempts": 146,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 134,
-          "pass1_rate": 95.71428571428572,
-          "pass5_success": 27,
-          "pass5_rate": 96.42857142857143
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -1370,6 +1362,14 @@
           "pass1_rate": 21.818181818181817,
           "pass5_success": 5,
           "pass5_rate": 45.45454545454545
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 134,
+          "pass1_rate": 95.71428571428572,
+          "pass5_success": 27,
+          "pass5_rate": 96.42857142857143
         }
       },
       "traces": [
@@ -2551,10 +2551,10 @@
         }
       ]
     },
-    "Qwen 3 Coder (with fray)": {
+    "Qwen 3 Coder (+Fray)": {
       "model_id": "bedrock_qwen.qwen3-coder-480b-a35b-v1_0",
       "config": "with_fray",
-      "display_name": "Qwen 3 Coder (with fray)",
+      "display_name": "Qwen 3 Coder (+Fray)",
       "total": 39,
       "success_rate": 56.41025641025641,
       "pass5_success": 26,
@@ -2563,14 +2563,6 @@
       "total_attempts": 195,
       "successful_attempts": 110,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 106,
-          "pass1_rate": 75.71428571428571,
-          "pass5_success": 23,
-          "pass5_rate": 82.14285714285714
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -2578,6 +2570,14 @@
           "pass1_rate": 7.2727272727272725,
           "pass5_success": 3,
           "pass5_rate": 27.27272727272727
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 106,
+          "pass1_rate": 75.71428571428571,
+          "pass5_success": 23,
+          "pass5_rate": 82.14285714285714
         }
       },
       "traces": [
@@ -3640,18 +3640,26 @@
         }
       ]
     },
-    "Qwen 3 Coder (without fray)": {
+    "Qwen 3 Coder": {
       "model_id": "bedrock_qwen.qwen3-coder-480b-a35b-v1_0",
       "config": "without_fray",
-      "display_name": "Qwen 3 Coder (without fray)",
+      "display_name": "Qwen 3 Coder",
       "total": 39,
-      "success_rate": 55.38461538461539,
+      "success_rate": 54.871794871794876,
       "pass5_success": 28,
       "pass5_rate": 71.7948717948718,
       "num_repetitions": 5,
       "total_attempts": 195,
-      "successful_attempts": 108,
+      "successful_attempts": 107,
       "by_category": {
+        "real-world": {
+          "total": 11,
+          "total_attempts": 55,
+          "successful_attempts": 9,
+          "pass1_rate": 16.363636363636363,
+          "pass5_success": 3,
+          "pass5_rate": 27.27272727272727
+        },
         "sctbench": {
           "total": 28,
           "total_attempts": 140,
@@ -3659,14 +3667,6 @@
           "pass1_rate": 70.0,
           "pass5_success": 25,
           "pass5_rate": 89.28571428571429
-        },
-        "real-world": {
-          "total": 11,
-          "total_attempts": 55,
-          "successful_attempts": 10,
-          "pass1_rate": 18.181818181818183,
-          "pass5_success": 3,
-          "pass5_rate": 27.27272727272727
         }
       },
       "traces": [
@@ -4247,7 +4247,7 @@
         {
           "instance_id": "Kafka_GlobalStreamThread_throwStreamsExceptionOnStartup",
           "path": "bedrock_qwen.qwen3-coder-480b-a35b-v1_0/without_fray/rep_4/fix_bug/real-world/Kafka_GlobalStreamThread_throwStreamsExceptionOnStartup.json",
-          "success": true,
+          "success": false,
           "category": "real-world",
           "task_type": "fix_bug"
         },
@@ -5002,10 +5002,10 @@
         }
       ]
     },
-    "Gemini 3.0 Flash (with fray)": {
+    "Gemini 3.0 Flash (+Fray)": {
       "model_id": "gemini_gemini-3-flash-preview",
       "config": "with_fray",
-      "display_name": "Gemini 3.0 Flash (with fray)",
+      "display_name": "Gemini 3.0 Flash (+Fray)",
       "total": 39,
       "success_rate": 55.38461538461539,
       "pass5_success": 31,
@@ -5014,14 +5014,6 @@
       "total_attempts": 195,
       "successful_attempts": 108,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 105,
-          "pass1_rate": 75.0,
-          "pass5_success": 28,
-          "pass5_rate": 100.0
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -5029,6 +5021,14 @@
           "pass1_rate": 5.454545454545454,
           "pass5_success": 3,
           "pass5_rate": 27.27272727272727
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 105,
+          "pass1_rate": 75.0,
+          "pass5_success": 28,
+          "pass5_rate": 100.0
         }
       },
       "traces": [
@@ -6217,26 +6217,18 @@
         }
       ]
     },
-    "Gemini 3.0 Flash (without fray)": {
+    "Gemini 3.0 Flash": {
       "model_id": "gemini_gemini-3-flash-preview",
       "config": "without_fray",
-      "display_name": "Gemini 3.0 Flash (without fray)",
+      "display_name": "Gemini 3.0 Flash",
       "total": 39,
-      "success_rate": 43.07692307692308,
-      "pass5_success": 23,
-      "pass5_rate": 58.97435897435898,
+      "success_rate": 56.41025641025641,
+      "pass5_success": 30,
+      "pass5_rate": 76.92307692307693,
       "num_repetitions": 5,
       "total_attempts": 195,
-      "successful_attempts": 84,
+      "successful_attempts": 110,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 82,
-          "pass1_rate": 58.57142857142858,
-          "pass5_success": 21,
-          "pass5_rate": 75.0
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -6244,6 +6236,14 @@
           "pass1_rate": 3.6363636363636362,
           "pass5_success": 2,
           "pass5_rate": 18.181818181818183
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 108,
+          "pass1_rate": 77.14285714285715,
+          "pass5_success": 28,
+          "pass5_rate": 100.0
         }
       },
       "traces": [
@@ -6341,7 +6341,7 @@
         {
           "instance_id": "AccountBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_2/fix_bug/sctbench/AccountBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6383,7 +6383,7 @@
         {
           "instance_id": "Lazy01Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_2/fix_bug/sctbench/Lazy01Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6404,7 +6404,7 @@
         {
           "instance_id": "TokenRingBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_2/fix_bug/sctbench/TokenRingBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6425,7 +6425,7 @@
         {
           "instance_id": "ArithmeticProgBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_2/fix_bug/sctbench/ArithmeticProgBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6474,7 +6474,7 @@
         {
           "instance_id": "StackBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_2/fix_bug/sctbench/StackBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6509,7 +6509,7 @@
         {
           "instance_id": "Sync02Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_2/fix_bug/sctbench/Sync02Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6523,7 +6523,7 @@
         {
           "instance_id": "AccountBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_5/fix_bug/sctbench/AccountBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6565,7 +6565,7 @@
         {
           "instance_id": "ArithmeticProgBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_5/fix_bug/sctbench/ArithmeticProgBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6656,7 +6656,7 @@
         {
           "instance_id": "Lazy01Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_4/fix_bug/sctbench/Lazy01Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6677,7 +6677,7 @@
         {
           "instance_id": "TokenRingBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_4/fix_bug/sctbench/TokenRingBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6691,7 +6691,7 @@
         {
           "instance_id": "Sync01Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_4/fix_bug/sctbench/Sync01Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6705,7 +6705,7 @@
         {
           "instance_id": "ArithmeticProgBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_4/fix_bug/sctbench/ArithmeticProgBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6747,7 +6747,7 @@
         {
           "instance_id": "StackBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_4/fix_bug/sctbench/StackBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6859,7 +6859,7 @@
         {
           "instance_id": "AccountBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_1/fix_bug/sctbench/AccountBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6915,7 +6915,7 @@
         {
           "instance_id": "TokenRingBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_1/fix_bug/sctbench/TokenRingBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6929,7 +6929,7 @@
         {
           "instance_id": "Sync01Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_1/fix_bug/sctbench/Sync01Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6943,7 +6943,7 @@
         {
           "instance_id": "ArithmeticProgBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_1/fix_bug/sctbench/ArithmeticProgBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -6992,7 +6992,7 @@
         {
           "instance_id": "StackBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_1/fix_bug/sctbench/StackBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7027,7 +7027,7 @@
         {
           "instance_id": "Sync02Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_1/fix_bug/sctbench/Sync02Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7125,7 +7125,7 @@
         {
           "instance_id": "AccountBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_3/fix_bug/sctbench/AccountBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7167,7 +7167,7 @@
         {
           "instance_id": "Lazy01Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_3/fix_bug/sctbench/Lazy01Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7188,7 +7188,7 @@
         {
           "instance_id": "TokenRingBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_3/fix_bug/sctbench/TokenRingBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7202,7 +7202,7 @@
         {
           "instance_id": "Sync01Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_3/fix_bug/sctbench/Sync01Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7216,7 +7216,7 @@
         {
           "instance_id": "ArithmeticProgBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_3/fix_bug/sctbench/ArithmeticProgBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7265,7 +7265,7 @@
         {
           "instance_id": "StackBad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_3/fix_bug/sctbench/StackBad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         },
@@ -7300,16 +7300,16 @@
         {
           "instance_id": "Sync02Bad",
           "path": "gemini_gemini-3-flash-preview/without_fray/rep_3/fix_bug/sctbench/Sync02Bad.json",
-          "success": false,
+          "success": true,
           "category": "sctbench",
           "task_type": "fix_bug"
         }
       ]
     },
-    "Gemini 3.0 Pro (with fray)": {
+    "Gemini 3.0 Pro (+Fray)": {
       "model_id": "gemini_gemini-3-pro-preview",
       "config": "with_fray",
-      "display_name": "Gemini 3.0 Pro (with fray)",
+      "display_name": "Gemini 3.0 Pro (+Fray)",
       "total": 39,
       "success_rate": 69.23076923076923,
       "pass5_success": 30,
@@ -7318,14 +7318,6 @@
       "total_attempts": 195,
       "successful_attempts": 135,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 127,
-          "pass1_rate": 90.71428571428571,
-          "pass5_success": 27,
-          "pass5_rate": 96.42857142857143
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -7333,6 +7325,14 @@
           "pass1_rate": 14.545454545454545,
           "pass5_success": 3,
           "pass5_rate": 27.27272727272727
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 127,
+          "pass1_rate": 90.71428571428571,
+          "pass5_success": 27,
+          "pass5_rate": 96.42857142857143
         }
       },
       "traces": [
@@ -8521,10 +8521,10 @@
         }
       ]
     },
-    "Gemini 3.0 Pro (without fray)": {
+    "Gemini 3.0 Pro": {
       "model_id": "gemini_gemini-3-pro-preview",
       "config": "without_fray",
-      "display_name": "Gemini 3.0 Pro (without fray)",
+      "display_name": "Gemini 3.0 Pro",
       "total": 39,
       "success_rate": 52.307692307692314,
       "pass5_success": 33,
@@ -8533,14 +8533,6 @@
       "total_attempts": 195,
       "successful_attempts": 102,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 95,
-          "pass1_rate": 67.85714285714286,
-          "pass5_success": 28,
-          "pass5_rate": 100.0
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -8548,6 +8540,14 @@
           "pass1_rate": 12.727272727272727,
           "pass5_success": 5,
           "pass5_rate": 45.45454545454545
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 95,
+          "pass1_rate": 67.85714285714286,
+          "pass5_success": 28,
+          "pass5_rate": 100.0
         }
       },
       "traces": [
@@ -9386,10 +9386,10 @@
         }
       ]
     },
-    "Claude 4.5 Opus (with fray)": {
+    "Claude 4.5 Opus (+Fray)": {
       "model_id": "bedrock_global.anthropic.claude-opus-4-5-20251101-v1_0",
       "config": "with_fray",
-      "display_name": "Claude 4.5 Opus (with fray)",
+      "display_name": "Claude 4.5 Opus (+Fray)",
       "total": 39,
       "success_rate": 81.02564102564102,
       "pass5_success": 36,
@@ -9398,14 +9398,6 @@
       "total_attempts": 195,
       "successful_attempts": 158,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 139,
-          "pass1_rate": 99.28571428571429,
-          "pass5_success": 28,
-          "pass5_rate": 100.0
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -9413,6 +9405,14 @@
           "pass1_rate": 34.54545454545455,
           "pass5_success": 8,
           "pass5_rate": 72.72727272727273
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 139,
+          "pass1_rate": 99.28571428571429,
+          "pass5_success": 28,
+          "pass5_rate": 100.0
         }
       },
       "traces": [
@@ -10755,10 +10755,10 @@
         }
       ]
     },
-    "Claude 4.5 Opus (without fray)": {
+    "Claude 4.5 Opus": {
       "model_id": "bedrock_global.anthropic.claude-opus-4-5-20251101-v1_0",
       "config": "without_fray",
-      "display_name": "Claude 4.5 Opus (without fray)",
+      "display_name": "Claude 4.5 Opus",
       "total": 39,
       "success_rate": 75.38461538461539,
       "pass5_success": 34,
@@ -10767,14 +10767,6 @@
       "total_attempts": 195,
       "successful_attempts": 147,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 130,
-          "pass1_rate": 92.85714285714286,
-          "pass5_success": 27,
-          "pass5_rate": 96.42857142857143
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -10782,6 +10774,14 @@
           "pass1_rate": 30.909090909090907,
           "pass5_success": 7,
           "pass5_rate": 63.63636363636363
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 130,
+          "pass1_rate": 92.85714285714286,
+          "pass5_success": 27,
+          "pass5_rate": 96.42857142857143
         }
       },
       "traces": [
@@ -12054,10 +12054,10 @@
         }
       ]
     },
-    "Claude 4.5 Sonnet (with fray)": {
+    "Claude 4.5 Sonnet (+Fray)": {
       "model_id": "bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0",
       "config": "with_fray",
-      "display_name": "Claude 4.5 Sonnet (with fray)",
+      "display_name": "Claude 4.5 Sonnet (+Fray)",
       "total": 39,
       "success_rate": 78.97435897435898,
       "pass5_success": 34,
@@ -12066,14 +12066,6 @@
       "total_attempts": 195,
       "successful_attempts": 154,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 134,
-          "pass1_rate": 95.71428571428572,
-          "pass5_success": 28,
-          "pass5_rate": 100.0
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -12081,6 +12073,14 @@
           "pass1_rate": 36.36363636363637,
           "pass5_success": 6,
           "pass5_rate": 54.54545454545454
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 134,
+          "pass1_rate": 95.71428571428572,
+          "pass5_success": 28,
+          "pass5_rate": 100.0
         }
       },
       "traces": [
@@ -13451,10 +13451,10 @@
         }
       ]
     },
-    "Claude 4.5 Sonnet (without fray)": {
+    "Claude 4.5 Sonnet": {
       "model_id": "bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0",
       "config": "without_fray",
-      "display_name": "Claude 4.5 Sonnet (without fray)",
+      "display_name": "Claude 4.5 Sonnet",
       "total": 39,
       "success_rate": 76.41025641025641,
       "pass5_success": 33,
@@ -13463,14 +13463,6 @@
       "total_attempts": 195,
       "successful_attempts": 149,
       "by_category": {
-        "sctbench": {
-          "total": 28,
-          "total_attempts": 140,
-          "successful_attempts": 131,
-          "pass1_rate": 93.57142857142857,
-          "pass5_success": 27,
-          "pass5_rate": 96.42857142857143
-        },
         "real-world": {
           "total": 11,
           "total_attempts": 55,
@@ -13478,6 +13470,14 @@
           "pass1_rate": 32.72727272727273,
           "pass5_success": 6,
           "pass5_rate": 54.54545454545454
+        },
+        "sctbench": {
+          "total": 28,
+          "total_attempts": 140,
+          "successful_attempts": 131,
+          "pass1_rate": 93.57142857142857,
+          "pass5_success": 27,
+          "pass5_rate": 96.42857142857143
         }
       },
       "traces": [

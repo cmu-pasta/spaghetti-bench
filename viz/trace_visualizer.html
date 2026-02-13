@@ -1331,13 +1331,12 @@
                 const tracePath = currentTrace._path || currentTrace._filename;
                 console.log('Loading patch for trace:', tracePath);
 
-                // Encode path components individually, not the whole path
-                const pathParts = tracePath.split('/');
-                const encodedPath = pathParts.map(part => encodeURIComponent(part)).join('/');
-                console.log('Encoded path:', encodedPath);
-                console.log('Fetching:', `/api/patch/${encodedPath}`);
+                // Convert .json to .patch and fetch directly from results directory
+                const patchPath = tracePath.replace('.json', '.patch');
+                const fetchUrl = `/results/${patchPath}`;
+                console.log('Fetching patch from:', fetchUrl);
 
-                const response = await fetch(`/api/patch/${encodedPath}`);
+                const response = await fetch(fetchUrl);
                 console.log('Response status:', response.status);
                 const patchContent = await response.text();
                 console.log('Patch content length:', patchContent.length);
