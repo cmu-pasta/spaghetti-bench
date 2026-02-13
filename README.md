@@ -27,6 +27,15 @@ The Docker image includes:
 - [Fray](https://github.com/cmu-pasta/fray) - JVM concurrency testing tool
 - Standard Unix utilities (bash, grep, find, sed, awk, git, tmux)
 
+Start the container:
+
+```bash
+docker run -it --rm \
+  -e LLM_API_KEY="your-api-key" \
+  vasumv/spaghetti-bench:latest \
+  bash
+```
+
 ### Option 2: Manual Setup
 
 **Prerequisites:**

@@ -642,8 +642,9 @@
 
     <script>
         // Configuration for trace loading
-        const TRACES_SOURCE = 'local'; // 'local' or 'github-raw'
-        const GITHUB_RAW_BASE_URL = 'https://raw.githubusercontent.com/cmu-pasta/spaghetti-bench/main/results'; // Update repo name!
+        const TRACES_SOURCE = 's3'; // 'local', 'github-raw', or 's3'
+        const GITHUB_RAW_BASE_URL = 'https://raw.githubusercontent.com/cmu-pasta/spaghetti-bench/main/results';
+        const S3_BASE_URL = 'https://spaghetti-bench.s3.us-east-1.amazonaws.com/results';
 
         let traces = [];
         let currentTrace = null;
@@ -872,7 +873,9 @@
             // Otherwise, fetch from source
             try {
                 let fetchUrl;
-                if (TRACES_SOURCE === 'github-raw') {
+                if (TRACES_SOURCE === 's3') {
+                    fetchUrl = `${S3_BASE_URL}/${tracePath}`;
+                } else if (TRACES_SOURCE === 'github-raw') {
                     fetchUrl = `${GITHUB_RAW_BASE_URL}/${tracePath}`;
                 } else {
                     fetchUrl = `/results/${tracePath}`;
@@ -1383,9 +1386,14 @@
 
                 // Convert .json to .patch and fetch from configured source
                 const patchPath = tracePath.replace('.json', '.patch');
-                const fetchUrl = TRACES_SOURCE === 'github-raw'
-                    ? `${GITHUB_RAW_BASE_URL}/${patchPath}`
-                    : `/results/${patchPath}`;
+                let fetchUrl;
+                if (TRACES_SOURCE === 's3') {
+                    fetchUrl = `${S3_BASE_URL}/${patchPath}`;
+                } else if (TRACES_SOURCE === 'github-raw') {
+                    fetchUrl = `${GITHUB_RAW_BASE_URL}/${patchPath}`;
+                } else {
+                    fetchUrl = `/results/${patchPath}`;
+                }
                 console.log('Fetching patch from:', fetchUrl);
 
                 const response = await fetch(fetchUrl);
