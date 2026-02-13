@@ -64,6 +64,19 @@ export LLM_API_KEY="your-api-key"
 
 ## Quick Start
 
+Clone the repository:
+
+```bash
+git clone https://github.com/cmu-pasta/spaghetti-bench.git
+cd spaghetti-bench
+```
+
+Set your API key:
+
+```bash
+export LLM_API_KEY="your-api-key"
+```
+
 Run all tasks from a benchmark:
 
 ```bash
