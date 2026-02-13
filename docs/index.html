@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaghetti Bench</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: #fff;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .nav-bar {
+            background: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            color: #333;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-link.primary {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .nav-link.primary:hover {
+            background: #5a6fd6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .description {
+            margin-bottom: 48px;
+        }
+
+        .description h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .description p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 16px;
+        }
+
+        .description p:last-child {
+            margin-bottom: 0;
+        }
+
+        .description a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .description a:hover {
+            text-decoration: underline;
+        }
+
+        .quick-links {
+            margin-top: 48px;
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid #eee;
+        }
+
+        .quick-links-title {
+            color: #999;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .quick-links-list {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .quick-link {
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .quick-link:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .resource-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .resource-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 32px 24px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .resource-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .resource-card-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .resource-card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .resource-card-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 48px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">🍝 Spaghetti Bench</a>
+        <div class="nav-links">
+            <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
+            <a href="/blog.html" class="nav-link">Blog</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <div class="logo">🍝</div>
+            <h1>Spaghetti Bench</h1>
+            <div class="subtitle">SWE-Agent Benchmark for Concurrency Bug Tasks</div>
+        </header>
+
+        <div class="description">
+            <h2>Overview</h2>
+            <p>
+                Evaluating AI agents on concurrency bug fixes is uniquely challenging. Unlike typical software bugs,
+                concurrency bugs involve <strong>non-deterministic behavior</strong> that depends on thread interleavings.
+                A test suite alone is insufficient as an oracle: tests may pass in most interleavings but fail
+                in specific, hard-to-trigger scenarios that result in race conditions.
+            </p>
+            <p>
+                This makes standard evaluation approaches unreliable. For context, SWE-Bench&mdash;the most widely
+                used benchmark for AI coding agents&mdash;contains only <a href="https://github.com/astropy/astropy/pull/18692" target="_blank"><strong>one example</strong></a> of a race condition
+                among its hundreds of tasks.
+            </p>
+
+            <h2>Our Approach</h2>
+            <p>
+                We propose to use <strong>controlled concurrency testing</strong> to systematically explore thread
+                interleavings, providing a stronger guarantee that a patch truly fixes the underlying issue
+                rather than just passing tests by chance.
+            </p>
+            <p>
+                Spaghetti Bench uses <a href="https://github.com/cmu-pasta/fray" target="_blank">Fray</a>, a controlled
+                concurrency testing tool, to exhaustively search over possible thread schedules. This allows us to
+                verify that fixes are correct across all interleavings, not just the ones that happen to execute
+                during a test run.
+            </p>
+
+            <h2>Dataset</h2>
+            <p>
+                Our dataset consists of <strong>39</strong> concurrency bug examples, featuring a combination of
+                buggy programs from <strong>SCTBench</strong>, a standard concurrency bug benchmark, as well as
+                real-world issues discovered by Fray in the open-source project Apache Kafka.
+            </p>
+        </div>
+
+        <div class="quick-links">
+            <div class="quick-links-title">Check it out!</div>
+            <div class="resource-cards">
+                <a href="/blog.html" class="resource-card">
+                    <div class="resource-card-icon">📝</div>
+                    <div class="resource-card-title">Blog Post</div>
+                    <div class="resource-card-description">Read about our evaluation of AI agents on concurrency bugs</div>
+                </a>
+                <a href="/leaderboard.html" class="resource-card">
+                    <div class="resource-card-icon">🏆</div>
+                    <div class="resource-card-title">Leaderboard</div>
+                    <div class="resource-card-description">View detailed results and performance metrics for all models</div>
+                </a>
+                <a href="https://github.com/cmu-pasta/spaghetti-bench" class="resource-card" target="_blank">
+                    <div class="resource-card-icon">💻</div>
+                    <div class="resource-card-title">GitHub</div>
+                    <div class="resource-card-description">Access the benchmark code and contribute new examples</div>
+                </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>Built by <a href="https://github.com/cmu-pasta" target="_blank">CMU PASTA Lab</a></p>
+        </footer>
+    </div>
+</body>
+</html>

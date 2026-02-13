@@ -2,134 +2,103 @@
   <img src="./logo/spaghettibench-high-resolution-logo-transparent.png" width="512" alt="logo"/>
 </a>
 
-
 A benchmark for evaluating AI coding agents on concurrency bug tasks.
-
-## Design
-
-### Architecture
-
-The benchmark consists of three main components:
-
-1. **Tasks** (`src/concurrency_bench/tasks/`)
-   - `FixBugTask`: Task for identifying and fixing concurrency bugs
-   - `TriggerBugTask`: Task for writing code that reproduces concurrency bugs
-   - Each task has `setup()` and `verify()` methods for task lifecycle management
-   - Task loaders (e.g., `SCTBenchLoader`) handle building and running benchmark programs
-
-2. **Agents** (`src/concurrency_bench/agents/`)
-   - `FixBugAgent`: Agent specialized in fixing concurrency issues
-   - `TriggerBugAgent`: Agent specialized in creating reproducible test cases for bugs
-   - Built on [OpenHands Agent SDK](https://docs.openhands.dev/sdk/) with default tools (Terminal, FileEditor, TaskTracker)
-
-3. **Runner** (`src/concurrency_bench/run_agent.py`)
-   - Loads tasks from JSONL file
-   - Creates isolated temporary workdir for each task
-   - Initializes and runs the agent
-   - Verifies results and reports summary
-   - Saves full conversation data to results directory
-
-### Workflow
-
-```
-Load Task → Create Temp Workdir → Copy Files → Initialize Agent → Run Agent → Verify → Save Results → Cleanup
-```
 
 ## Setup
 
-### Docker Setup (Recommended)
+There are two ways to run Spaghetti Bench:
 
-Build the Docker image using Nix flakes:
+### Option 1: Docker (Recommended)
+
+Pull the pre-built Docker image:
 
 ```bash
-# Build the Docker image
-nix build .#dockerImage
+docker pull ghcr.io/cmu-pasta/spaghetti-bench:latest
+```
 
-# Load into Docker
+Or build from source using Nix:
+
+```bash
+nix build .#dockerImage
 docker load < result
 ```
 
 The Docker image includes:
-- Python environment with all dependencies
-- OpenJDK 25
+- Python 3.13 with all dependencies
+- OpenJDK 21
 - [Fray](https://github.com/cmu-pasta/fray) - JVM concurrency testing tool
-- Standard Unix utilities (bash, grep, find, sed, awk, git, tmux, etc.)
+- Standard Unix utilities (bash, grep, find, sed, awk, git, tmux)
 
-### Local Setup
+### Option 2: Manual Setup
+
+**Prerequisites:**
+- Python 3.11+
+- Java 21+
+- [Fray](https://github.com/cmu-pasta/fray) installed and available in PATH
+
+**Install Fray:**
 
 ```bash
-# Install dependencies (using uv)
+# Clone and build Fray
+git clone https://github.com/cmu-pasta/fray.git
+cd fray
+./gradlew shadowJar
+
+# Add to PATH (add to ~/.bashrc or ~/.zshrc)
+export PATH=$PATH:/path/to/fray/build/install/fray/bin
+```
+
+**Install Python dependencies:**
+
+```bash
+# Using uv (recommended)
 uv sync
 
-# Set API key
+# Or using pip
+pip install -e .
+```
+
+**Set API key:**
+
+```bash
 export LLM_API_KEY="your-api-key"
 ```
 
-## Usage
+## Quick Start
 
-### Quick Start (Docker)
-
-Use the convenience script to run agents in Docker:
+Run all tasks from a benchmark:
 
 ```bash
-# Run bug fix task
-./run_agent.sh fix
-
-# Run bug trigger task
-./run_agent.sh trigger
-```
-
-The script:
-- Mounts the current directory to `/workspace` in the container
-- Reads API key from `~/.aws/bedrock.key`
-- Runs all tasks in `src/concurrency_bench/sctbench.jsonl`
-- Saves results to `results/` directory
-
-### Manual Usage (Docker)
-
-```bash
-docker run --rm -it \
-  -v $(pwd):/workspace \
-  -e LLM_API_KEY="your-api-key" \
-  concurrency-bench:latest \
-  python src/concurrency_bench/run_agent.py \
-    --tasks-file src/concurrency_bench/sctbench.jsonl \
-    --task-type fix_bug \
-    --model-id bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0 \
-    --results-dir results
-```
-
-### Local Usage (without Docker)
-
-```bash
-uv run python src/concurrency_bench/run_agent.py \
+python src/concurrency_bench/run_agent.py \
   --tasks-file src/concurrency_bench/sctbench.jsonl \
   --task-type fix_bug \
   --model-id bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0
 ```
 
-### Run Single Task
+Run on real-world Kafka bugs:
 
 ```bash
-./run_agent.sh fix  # or use docker/uv run commands with:
-# --instance-id Reorder3Bad
+python src/concurrency_bench/run_agent.py \
+  --tasks-file src/concurrency_bench/kafka.jsonl \
+  --task-type fix_bug \
+  --model-id bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0
 ```
 
-## Task File Format
+Run a single task:
 
-Tasks are defined in JSONL format (one JSON object per line):
-
-```jsonl
-{"instance_id": "Reorder3Bad", "path": "benchmarks/SCTBench/cs/origin/Reorder3Bad.java", "description": "Memory ordering bug with concurrent reads and writes to volatile variables", "benchmark_category": "sctbench", "subcategory": "cs/origin", "loader": "SCTBenchLoader"}
+```bash
+python src/concurrency_bench/run_agent.py \
+  --tasks-file src/concurrency_bench/sctbench.jsonl \
+  --task-type fix_bug \
+  --model-id bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0 \
+  --instance-id Reorder3Bad
 ```
 
-**Fields:**
-- `instance_id`: Unique task identifier
-- `path`: Path to file/directory (relative to `--base-path`)
-- `description`: Description of the concurrency bug
-- `benchmark_category`: Category of the benchmark (e.g., "sctbench")
-- `subcategory`: Subcategory within the benchmark (e.g., "cs/origin")
-- `loader`: Task loader class name (e.g., "SCTBenchLoader") - handles building and running the task
+## Available Task Files
+
+- `src/concurrency_bench/sctbench.jsonl` - SCTBench synthetic bugs (28 tasks)
+- `src/concurrency_bench/kafka.jsonl` - Apache Kafka bugs (11 tasks)
+- `src/concurrency_bench/all.jsonl` - All tasks combined (39 tasks)
 
 ## Command-Line Options
 
@@ -137,33 +106,29 @@ Tasks are defined in JSONL format (one JSON object per line):
 |--------|----------|-------------|
 | `--tasks-file` | Yes | Path to JSONL file containing tasks |
 | `--task-type` | Yes | Task type: `fix_bug` or `trigger_bug` |
-| `--model-id` | Yes | Model ID (e.g., `bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0`) |
-| `--base-path` | No | Base path for resolving task paths (default: current directory) |
-| `--api-key` | No | LLM API key (default: `LLM_API_KEY` env var) |
+| `--model-id` | Yes | Model ID (must be LiteLLM compatible) |
 | `--instance-id` | No | Run only the specified task |
-| `--results-dir` | No | Directory to save conversation results (default: `results/`) |
+| `--results-dir` | No | Directory to save results (default: `results/`) |
+| `--enable-fray-tools` | No | Give agent access to Fray debugging tools |
+| `--keep-result` | No | Keep temporary workspace after completion |
+| `--max-workers` | No | Docker only: Max parallel workers |
+| `--memory` | No | Docker only: Memory limit (e.g., `16g`) |
+| `--cpus` | No | Docker only: CPU limit (e.g., `8`) |
 
 ## Output
 
 ### Console Output
 
-The runner prints:
-- Task information and progress
-- Agent execution output
-- Verification results
-- Summary with success/failure counts
-
-Example output:
 ```
 ================================================================================
 Running task: Reorder3Bad
-Description: Memory ordering bug with concurrent reads and writes to volatile variables
+Description: Memory ordering bug with concurrent reads and writes
 Task type: fix_bug
 Model: bedrock/global.anthropic.claude-sonnet-4-5-20250929-v1:0
 ================================================================================
 
 Created workdir: /tmp/concurrency_bench_Reorder3Bad_abc123/
-Copied benchmarks/SCTBench/cs/origin/Reorder3Bad.java -> /tmp/concurrency_bench_Reorder3Bad_abc123/
+Copied benchmarks/SCTBench/cs/origin/Reorder3Bad.java
 Starting agent...
 ...
 Agent finished!
@@ -175,40 +140,33 @@ Saved conversation to: results/fix_bug/sctbench/Reorder3Bad.json
 
 ### Results Directory
 
-Conversation data is saved in a structured directory:
+Results are saved in a structured format:
 
 ```
 results/
-├── fix_bug/
-│   └── sctbench/
-│       ├── Reorder3Bad.json
-│       └── Reorder3Bad.patch
-└── trigger_bug/
-    └── sctbench/
-        ├── Reorder3Bad.json
-        └── Reorder3Bad.patch
+└── {model_id}/
+    └── {with_fray|without_fray}/
+        └── {rep_id}/
+            └── {task_type}/
+                └── {benchmark_category}/
+                    ├── {instance_id}.json
+                    └── {instance_id}.patch
 ```
 
 Each JSON file contains:
-- `instance_id` - Task identifier
-- `task_type` - "fix_bug" or "trigger_bug"
-- `model_id` - Model used for the task
-- `description` - Task description
-- `benchmark_category` - Benchmark category
-- `subcategory` - Benchmark subcategory
-- `conversation_id` - Unique conversation ID
-- `success` - Boolean indicating task success
-- `setup_output` - Output from initial bug triggering
-- `verify_output` - Output from verification after agent's fix
-- `events` - Full conversation event stream (all messages, tool calls, responses, etc.)
+- Task metadata (instance_id, description, category)
+- Model information
+- Success/failure status
+- Setup and verification output
+- Full conversation event stream (messages, tool calls, responses)
 
 Each `.patch` file contains a git diff of the changes made by the agent.
 
-This data enables post-hoc analysis, debugging, and replay of agent interactions.
+## Visualizing Results
 
 ### Trace Visualizer
 
-The `viz/` directory contains a web-based trace visualizer for exploring agent conversations:
+View agent conversations interactively:
 
 ```bash
 cd viz
@@ -218,66 +176,101 @@ python3 serve_traces.py
 Then open http://localhost:8001 in your browser.
 
 **Features:**
-- **Interactive Timeline**: View the complete sequence of events in agent conversations
-- **Patch Diff View**: See code changes with GitHub-style syntax highlighting
-- **Auto-Loading**: Automatically loads all traces from `results/` directory
-- **Live Updates**: Watches for new or modified trace files and auto-reloads
-- **Shareable Links**: Click any trace to update the URL for easy sharing
-- **Smart Truncation**: Long outputs show only the tail with option to expand
+- Interactive timeline of agent events
+- GitHub-style patch diff viewer
+- Auto-loading from results directory
+- Shareable trace URLs
+- Search and filter by model/category
 
-See [`viz/README.md`](viz/README.md) for more details.
+### Leaderboard
+
+Generate aggregated results:
+
+```bash
+cd viz
+python3 aggregate_results.py
+```
+
+This creates `leaderboard_data.json` with:
+- Pass@1 and Pass@5 metrics for each model
+- Breakdown by benchmark category
+- Model rankings
+
+View the leaderboard by opening `viz/index.html` in a browser.
 
 ## Benchmarks
 
 ### SCTBench
 
-The repository includes benchmarks from [SCTBench](https://github.com/mc-imperial/sctbench), a suite of concurrency bugs translated to Java. These are located in `benchmarks/SCTBench/` and include:
+SCTBench is a suite of concurrency bugs translated to Java, located in `benchmarks/SCTBench/`:
 
-- **cs/origin/** - Original concurrency bugs (data races, atomicity violations, etc.)
-- **cs/hard/** - More challenging variants with increased thread counts
+- **cs/origin/** - Original bugs (races, atomicity violations, deadlocks)
+- **cs/hard/** - Challenging variants with more threads
 - **cb/** - Concurrent data structure bugs
 - **chess/** - Work-stealing queue bugs
 
-All SCTBench tasks use the `SCTBenchLoader` which:
-1. Compiles Java files with `javac`
-2. Runs with `java -ea` (assertions enabled)
-3. Reports success based on exit code
-
 ### Real-World Projects
 
-The repository also includes tasks from real-world open-source projects (Kafka, Lucene, Guava). These tasks:
+Real-world bugs from open-source projects:
 
-- Clone the full repository at a specific commit containing the bug
-- Build the project using its native build system (Gradle/Maven)
-- Run JUnit tests with Fray to detect concurrency bugs
-- Give agents access to the entire codebase for fixing
+- **Apache Kafka** - 11 concurrency bugs from the Kafka streams library
+- Full repository is cloned at bug-triggering commit
+- Tests run with Fray to systematically explore thread interleavings
 
-Real-world tasks use specialized loaders (`KafkaLoader`, `LuceneLoader`, `GuavaLoader`) which:
-1. Clone the repository at the specified commit
-2. Apply necessary patches (e.g., for dependency copying)
-3. Build the project (may take several minutes)
-4. Run tests using Fray with `JUnitRunner` helper
+## Architecture
 
-Example task entry:
+### Three-Layer Design
+
+1. **Tasks** (`src/concurrency_bench/tasks/`)
+   - `FixBugTask`: Identify and fix concurrency bugs
+   - `TriggerBugTask`: Write test cases that reproduce bugs
+   - Task loaders handle building and running benchmarks
+
+2. **Agents** (`src/concurrency_bench/agents/`)
+   - `FixBugAgent`: Specialized in fixing concurrency issues
+   - `TriggerBugAgent`: Specialized in creating reproducible test cases
+   - Built on [OpenHands Agent SDK](https://docs.openhands.dev/sdk/)
+
+3. **Runner** (`src/concurrency_bench/run_agent.py`)
+   - Loads tasks from JSONL
+   - Creates isolated workspace per task
+   - Runs agent and verifies results
+   - Saves full conversation data
+
+### Workflow
+
+```
+Load Task → Create Workspace → Copy Files → Run Agent → Verify → Save Results → Cleanup
+```
+
+## Task File Format
+
+Tasks are defined in JSONL format (one JSON object per line):
+
+**SCTBench example:**
 ```jsonl
-{"instance_id": "Kafka_KAFKA-18418", "repo_url": "https://github.com/apache/kafka.git", "commit": "3.8.0", "test_class": "org.apache.kafka.streams.KafkaStreamsTest", "test_method": "shouldReturnFalseOnCloseWhenThreadsHaventTerminated", "description": "Race condition in KafkaStreams shutdown...", "benchmark_category": "real-world", "subcategory": "kafka", "loader": "KafkaLoader"}
+{"instance_id": "Reorder3Bad", "path": "benchmarks/SCTBench/cs/origin/Reorder3Bad.java", "description": "Memory ordering bug", "benchmark_category": "sctbench", "subcategory": "cs/origin", "loader": "SCTBenchLoader"}
 ```
 
-### Available Tools
-
-Agents have access to standard development tools in the Docker environment:
-
-- **Java**: OpenJDK 25 for compiling and running benchmarks
-- **Fray**: Concurrency testing tool for exploring thread interleavings (available as `/bin/fray`)
-- **Standard utilities**: bash, grep, find, sed, awk, git, tmux
-
-Example Fray usage:
-```bash
-javac MyBuggyProgram.java
-fray -cp . MyBuggyProgram --iter 10000
+**Real-world example:**
+```jsonl
+{"instance_id": "Kafka_KAFKA-18418", "repo_url": "https://github.com/apache/kafka.git", "commit": "3.8.0", "test_class": "org.apache.kafka.streams.KafkaStreamsTest", "test_method": "shouldReturnFalseOnCloseWhenThreadsHaventTerminated", "description": "Race condition in shutdown", "benchmark_category": "real-world", "subcategory": "kafka", "loader": "KafkaLoader"}
 ```
+
+**Required fields:**
+- `instance_id`: Unique task identifier
+- `loader`: Class name that handles build/run (e.g., `SCTBenchLoader`)
+- `benchmark_category`: Category (e.g., `sctbench`, `real-world`)
+- `description`: Human-readable description
 
 ## Development
+
+### Adding New Benchmarks
+
+1. Add benchmark files to `benchmarks/`
+2. Create a task loader in `src/concurrency_bench/tasks/loaders/`
+3. Add task entries to a JSONL file
+4. Run with `--tasks-file your_tasks.jsonl`
 
 ### Modifying the Docker Image
 
@@ -288,11 +281,23 @@ nix build .#dockerImage
 docker load < result
 ```
 
-Note: Python code changes do NOT require rebuilding - the `run_agent.sh` script mounts your local directory, so edits are immediately visible.
+**Note:** Python code changes don't require rebuilding - `run_agent.sh` mounts the local directory.
 
-### Adding New Benchmarks
+## Citation
 
-1. Add benchmark files to `benchmarks/`
-2. Create a task loader in `src/concurrency_bench/tasks/loaders/`
-3. Add task entries to a JSONL file with the appropriate loader
-4. Run with `--tasks-file your_tasks.jsonl`
+```bibtex
+@misc{spaghettibench2025,
+  title={Spaghetti Bench: Evaluating AI Agents on Concurrency Bug Fixes},
+  author={Vikram, Vasu and Li, Ao and Padhye, Rohan},
+  year={2025},
+  url={https://github.com/cmu-pasta/spaghetti-bench}
+}
+```
+
+## License
+
+This project is licensed under the MIT License - see LICENSE file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

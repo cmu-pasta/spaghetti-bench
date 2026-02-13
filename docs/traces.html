@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examples - Spaghetti Bench</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-bar {
+            background: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            color: #333;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-link.primary {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .nav-link.primary:hover {
+            background: #5a6fd6;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 48px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #fff;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #fafafa;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-left: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.loading {
+            background: #ff9800;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .auto-reload-label {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .file-input-wrapper {
+            margin-top: 10px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .trace-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .trace-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .trace-item:hover {
+            background: #f8f8f8;
+        }
+
+        .trace-item.active {
+            background: #e3f2fd;
+            border-left: 3px solid #2196f3;
+        }
+
+        .trace-item-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .trace-item-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .trace-item-success {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .trace-item-success.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .trace-item-success.failure {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #fafafa;
+            z-index: 10;
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #e0e0e0;
+            background: #fff;
+        }
+
+        .view-tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .view-tab:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .view-tab.active {
+            color: #2196f3;
+            border-bottom-color: #2196f3;
+        }
+
+        .view-content {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .content-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .meta-label {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .events-container {
+            padding: 20px 30px;
+        }
+
+        .event {
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .event-header {
+            padding: 12px 16px;
+            background: #fafafa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .event-header:hover {
+            background: #f5f5f5;
+        }
+
+        .event-type {
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .event-type > span:last-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .event-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .event-badge.user {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .event-badge.assistant {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .event-badge.system {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .event-badge.tool {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .event-timestamp {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .event-body {
+            padding: 16px;
+        }
+
+        .event-body.collapsed {
+            display: none;
+        }
+
+        .message-content {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+
+        .tool-call {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .tool-call:last-child {
+            margin-bottom: 0;
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .tool-params {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .tool-result {
+            margin-top: 8px;
+            padding: 10px;
+            background: #fffbf0;
+            border: 1px solid #ffe0b2;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .system-prompt {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        .collapse-icon {
+            transition: transform 0.2s;
+            font-size: 12px;
+        }
+
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge.failure {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .search-box {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        .filter-box {
+            padding: 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-box label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .filter-box select {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        .filter-box select:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Diff view styles */
+        .diff-container {
+            padding: 20px 30px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .diff-line {
+            padding: 2px 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .diff-line.add {
+            background: #e6ffec;
+            color: #24292e;
+        }
+
+        .diff-line.add::before {
+            content: '+ ';
+            color: #22863a;
+            font-weight: 600;
+        }
+
+        .diff-line.remove {
+            background: #ffebe9;
+            color: #24292e;
+        }
+
+        .diff-line.remove::before {
+            content: '- ';
+            color: #d73a49;
+            font-weight: 600;
+        }
+
+        .diff-line.header {
+            background: #f1f8ff;
+            color: #0366d6;
+            font-weight: 600;
+            padding: 4px 8px;
+            margin-top: 12px;
+        }
+
+        .diff-line.context {
+            color: #586069;
+        }
+
+        .diff-line.meta {
+            background: #fafbfc;
+            color: #6a737d;
+            padding: 4px 8px;
+            font-weight: 500;
+        }
+
+        .no-patch-message {
+            padding: 40px;
+            text-align: center;
+            color: #999;
+        }
+
+        .no-patch-message-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">🍝 Spaghetti Bench</a>
+        <div class="nav-links">
+            <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
+            <a href="/blog.html" class="nav-link">Blog</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Traces<span class="status-indicator" id="statusIndicator"></span></h1>
+            </div>
+            <div class="filter-box" id="repFilterBox" style="display: none;">
+                <label for="repFilter">Repetition:</label>
+                <select id="repFilter">
+                    <option value="all">All</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search traces...">
+            </div>
+            <div class="trace-list" id="traceList">
+                <div class="empty-state" id="loadingState">
+                    <div class="empty-state-icon">⏳</div>
+                    <div class="empty-state-title">Loading traces...</div>
+                </div>
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-state-icon">📁</div>
+                    <div class="empty-state-title">No traces loaded</div>
+                    <div class="empty-state-text">Upload JSON trace files to get started</div>
+                </div>
+            </div>
+        </div>
+        <div class="main-content" id="mainContent">
+            <!-- Content will be populated when a trace is selected -->
+        </div>
+    </div>
+
+    <!-- Template for trace view with tabs -->
+    <template id="traceViewTemplate">
+        <div class="content-header">
+            <div class="content-title" id="traceTitle"></div>
+            <div class="content-meta" id="traceMeta"></div>
+        </div>
+        <div class="view-tabs">
+            <div class="view-tab active" onclick="switchView('timeline')">📋 Timeline</div>
+            <div class="view-tab" onclick="switchView('patch')">📝 Patch</div>
+        </div>
+        <div class="view-content active" id="timelineView"></div>
+        <div class="view-content" id="patchView"></div>
+    </template>
+
+    <script>
+        // Configuration for trace loading
+        const TRACES_SOURCE = 'local'; // 'local' or 'github-raw'
+        const GITHUB_RAW_BASE_URL = 'https://raw.githubusercontent.com/cmu-pasta/spaghetti-bench/main/results'; // Update repo name!
+
+        let traces = [];
+        let currentTrace = null;
+        let collapsedStates = new Set();
+        let selectedRep = 'all';
+        let traceCache = new Map(); // Cache for loaded trace JSON files
+
+        const traceList = document.getElementById('traceList');
+        const mainContent = document.getElementById('mainContent');
+        const searchInput = document.getElementById('searchInput');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const repFilter = document.getElementById('repFilter');
+        const repFilterBox = document.getElementById('repFilterBox');
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+
+        searchInput.addEventListener('input', handleSearch);
+        repFilter.addEventListener('change', handleRepFilter);
+
+        function handleRepFilter(e) {
+            selectedRep = e.target.value;
+            renderTraceList(searchInput.value);
+        }
+
+        function updateRepFilterOptions() {
+            // Extract unique repetition IDs from trace paths
+            const reps = new Set();
+            traces.forEach(trace => {
+                const path = trace._path || '';
+                const match = path.match(/rep_(\d+)/);
+                if (match) {
+                    reps.add(match[1]);
+                }
+            });
+
+            // Sort numerically
+            const sortedReps = Array.from(reps).sort((a, b) => parseInt(a) - parseInt(b));
+
+            // Show filter if there are multiple reps
+            if (sortedReps.length > 1) {
+                repFilterBox.style.display = 'flex';
+                repFilter.innerHTML = '<option value="all">All</option>' +
+                    sortedReps.map(r => `<option value="${r}">Rep ${r}</option>`).join('');
+            } else {
+                repFilterBox.style.display = 'none';
+            }
+        }
+
+        function setLoadingStatus(isLoading) {
+            if (statusIndicator) {
+                if (isLoading) {
+                    statusIndicator.classList.add('loading');
+                } else {
+                    statusIndicator.classList.remove('loading');
+                }
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            setLoadingStatus(true);
+
+            // Remove this block - no longer needed
+
+            Promise.all(files.map(file => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const trace = JSON.parse(e.target.result);
+                            trace._filename = file.name;
+                            resolve(trace);
+                        } catch (error) {
+                            console.error('Error parsing JSON:', error);
+                            reject(error);
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsText(file);
+                });
+            })).then(loadedTraces => {
+                traces = loadedTraces;
+                updateRepFilterOptions();
+                renderTraceList();
+
+                // Check if there's a trace specified in the URL hash
+                if (window.location.hash.startsWith('#trace/')) {
+                    loadTraceFromUrl();
+                } else if (traces.length > 0) {
+                    selectTrace(0);
+                }
+
+                setLoadingStatus(false);
+            }).catch(error => {
+                console.error('Error loading files:', error);
+                setLoadingStatus(false);
+            });
+        }
+
+        function handleSearch(e) {
+            const query = e.target.value.toLowerCase();
+            renderTraceList(query);
+        }
+
+        function renderTraceList(searchQuery = '') {
+            const filteredTraces = traces.filter(trace => {
+                // Filter by repetition
+                if (selectedRep !== 'all') {
+                    const path = trace._path || '';
+                    const match = path.match(/rep_(\d+)/);
+                    if (!match || match[1] !== selectedRep) {
+                        return false;
+                    }
+                }
+                // Filter by search query
+                if (!searchQuery) return true;
+                const searchText = `${trace.instance_id} ${trace.description} ${trace.task_type} ${trace.benchmark_category}`.toLowerCase();
+                return searchText.includes(searchQuery);
+            });
+
+            if (filteredTraces.length === 0) {
+                traceList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">${traces.length === 0 ? '📁' : '🔍'}</div>
+                        <div class="empty-state-title">${traces.length === 0 ? 'No traces loaded' : 'No matches found'}</div>
+                        <div class="empty-state-text">${traces.length === 0 ? 'Upload JSON trace files to get started' : 'Try a different search query'}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            traceList.innerHTML = filteredTraces.map((trace, index) => {
+                const globalIndex = traces.indexOf(trace);
+                const isActive = currentTrace === trace;
+                const successBadge = trace.success !== undefined
+                    ? `<span class="trace-item-success ${trace.success ? 'success' : 'failure'}">${trace.success ? '✓ Success' : '✗ Failed'}</span>`
+                    : '';
+
+                return `
+                    <div class="trace-item ${isActive ? 'active' : ''}" onclick="selectTrace(${globalIndex})">
+                        <div class="trace-item-title">
+                            ${escapeHtml(trace.instance_id || trace._filename)}
+                            ${successBadge}
+                        </div>
+                        <div class="trace-item-meta">
+                            ${escapeHtml(trace.task_type || 'Unknown')} • ${escapeHtml(trace.benchmark_category || 'N/A')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function selectTrace(index, updateUrl = true) {
+            const trace = traces[index];
+
+            // Fetch full content if not already loaded
+            currentTrace = await fetchTraceContent(trace);
+            collapsedStates.clear();
+
+            // Collapse system prompt and setup/verify outputs by default
+            collapsedStates.add('setup');
+            collapsedStates.add('verify');
+
+            // Collapse system prompt events by default
+            if (currentTrace && currentTrace.events) {
+                currentTrace.events.forEach((event, idx) => {
+                    if (event.kind === 'SystemPromptEvent') {
+                        collapsedStates.add(`event-${idx}`);
+                    }
+                });
+            }
+
+            // Update URL hash for sharing
+            if (updateUrl && currentTrace) {
+                const tracePath = currentTrace._path || currentTrace._filename;
+                window.location.hash = `#trace/${tracePath}`;
+            }
+
+            renderTraceList(searchInput.value);
+            renderTrace();
+        }
+
+        // Load trace from URL hash on page load
+        function loadTraceFromUrl() {
+            const hash = window.location.hash;
+            if (hash.startsWith('#trace/')) {
+                const tracePath = decodeURIComponent(hash.substring(7)); // Remove '#trace/'
+                console.log('Loading trace from URL:', tracePath);
+
+                // Find the trace by path
+                const index = traces.findIndex(t =>
+                    (t._path === tracePath) || (t._filename === tracePath)
+                );
+
+                if (index >= 0) {
+                    console.log('Found trace at index:', index);
+                    selectTrace(index, false); // Don't update URL again
+                } else {
+                    console.log('Trace not found in loaded traces');
+                }
+            }
+        }
+
+        // Listen for hash changes (e.g., browser back/forward)
+        window.addEventListener('hashchange', () => {
+            if (window.location.hash.startsWith('#trace/')) {
+                loadTraceFromUrl();
+            }
+        });
+
+        // Fetch full trace content (lazy loading from GitHub Release if needed)
+        async function fetchTraceContent(trace) {
+            const tracePath = trace._path || trace._filename;
+
+            // Check cache first
+            if (traceCache.has(tracePath)) {
+                return traceCache.get(tracePath);
+            }
+
+            // If trace already has full content (events array), return it
+            if (trace.events && trace.events.length > 0) {
+                traceCache.set(tracePath, trace);
+                return trace;
+            }
+
+            // Otherwise, fetch from source
+            try {
+                let fetchUrl;
+                if (TRACES_SOURCE === 'github-raw') {
+                    fetchUrl = `${GITHUB_RAW_BASE_URL}/${tracePath}`;
+                } else {
+                    fetchUrl = `/results/${tracePath}`;
+                }
+
+                console.log('Fetching full trace from:', fetchUrl);
+                const response = await fetch(fetchUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const fullTrace = await response.json();
+                // Merge metadata with full content
+                const mergedTrace = { ...trace, ...fullTrace };
+                traceCache.set(tracePath, mergedTrace);
+                return mergedTrace;
+            } catch (error) {
+                console.error('Error fetching trace:', error);
+                // Return partial trace if fetch fails
+                return trace;
+            }
+        }
+
+        function renderTrace() {
+            if (!currentTrace) {
+                mainContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👈</div>
+                        <div class="empty-state-title">Select a trace</div>
+                        <div class="empty-state-text">Choose a trace from the sidebar to view details</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const trace = currentTrace;
+            const successBadge = trace.success !== undefined
+                ? `<span class="status-badge ${trace.success ? 'success' : 'failure'}">${trace.success ? '✓ Success' : '✗ Failed'}</span>`
+                : '';
+
+            // Build the header and metadata
+            let headerHtml = `
+                <div class="content-header">
+                    <div class="content-title">${escapeHtml(trace.instance_id || trace._filename)} ${successBadge}</div>
+                    <div class="content-meta">
+                        <div class="meta-item"><span class="meta-label">Task:</span> ${escapeHtml(trace.task_type || 'Unknown')}</div>
+                        <div class="meta-item"><span class="meta-label">Category:</span> ${escapeHtml(trace.category || trace.benchmark_category || 'N/A')}</div>
+                        ${trace.model_id ? `<div class="meta-item"><span class="meta-label">Model:</span> ${escapeHtml(trace.model_id)}</div>` : ''}
+                        ${trace.events && trace.events.length ? `<div class="meta-item"><span class="meta-label">Events:</span> ${trace.events.length}</div>` : ''}
+                    </div>
+                </div>
+            `;
+
+            // Build the timeline view content
+            let timelineHtml = '<div class="events-container">';
+
+            if (trace.description) {
+                timelineHtml += `
+                    <div class="event">
+                        <div class="event-header" onclick="toggleCollapse('description')">
+                            <div class="event-type">
+                                <span class="collapse-icon ${collapsedStates.has('description') ? 'collapsed' : ''}">▼</span>
+                                <span>Description</span>
+                            </div>
+                        </div>
+                        <div class="event-body ${collapsedStates.has('description') ? 'collapsed' : ''}">
+                            <div class="message-content">${escapeHtml(trace.description)}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (trace.setup_output) {
+                timelineHtml += renderOutputSection('Setup Output', 'setup', trace.setup_output);
+            }
+
+            if (trace.verify_output) {
+                timelineHtml += renderOutputSection('Verify Output', 'verify', trace.verify_output);
+            }
+
+            if (trace.events && Array.isArray(trace.events)) {
+                trace.events.forEach((event, index) => {
+                    timelineHtml += renderEvent(event, index);
+                });
+            } else {
+                timelineHtml += `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <div class="empty-state-title">Loading trace details...</div>
+                        <div class="empty-state-text">Fetching full trace content</div>
+                    </div>
+                `;
+            }
+
+            timelineHtml += '</div>';
+
+            // Combine all parts with tabs
+            const finalHtml = `
+                ${headerHtml}
+                <div class="view-tabs">
+                    <div class="view-tab active" onclick="switchView('timeline')">📋 Timeline</div>
+                    <div class="view-tab" onclick="switchView('patch')">📝 Patch</div>
+                </div>
+                <div class="view-content active" id="timelineView">${timelineHtml}</div>
+                <div class="view-content" id="patchView"></div>
+            `;
+
+            mainContent.innerHTML = finalHtml;
+        }
+
+        function renderOutputSection(title, id, content) {
+            const MAX_LINES = 100; // Show last 100 lines for long outputs
+            const lines = content.split('\n');
+            const isTruncated = lines.length > MAX_LINES;
+
+            let displayContent = content;
+            let truncatedMessage = '';
+
+            if (isTruncated) {
+                const tailLines = lines.slice(-MAX_LINES);
+                displayContent = tailLines.join('\n');
+                const hiddenLines = lines.length - MAX_LINES;
+                truncatedMessage = `
+                    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 8px; margin-bottom: 8px; border-radius: 4px; font-size: 12px;">
+                        ⚠️ Output truncated - showing last ${MAX_LINES} lines (${hiddenLines} lines hidden)
+                        <button onclick="showFullOutput('${id}')" style="margin-left: 8px; padding: 4px 8px; border: 1px solid #ffc107; background: #fff; border-radius: 3px; cursor: pointer; font-size: 11px;">Show Full Output</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="event">
+                    <div class="event-header" onclick="toggleCollapse('${id}')">
+                        <div class="event-type">
+                            <span class="collapse-icon ${collapsedStates.has(id) ? 'collapsed' : ''}">▼</span>
+                            <span>${title}</span>
+                            ${isTruncated ? `<span style="color: #ff9800; font-size: 12px; margin-left: 8px;">(${lines.length} lines)</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="event-body ${collapsedStates.has(id) ? 'collapsed' : ''}" data-full-content="${escapeHtml(content).replace(/"/g, '&quot;')}">
+                        ${truncatedMessage}
+                        <div class="tool-result" id="${id}-content">${escapeHtml(displayContent)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showFullOutput(id) {
+            const eventBody = document.querySelector(`[data-full-content]`);
+            if (!eventBody) return;
+
+            // Find the specific event body for this id
+            const allEventBodies = document.querySelectorAll('.event-body[data-full-content]');
+            for (const body of allEventBodies) {
+                if (body.querySelector(`#${id}-content`)) {
+                    const fullContent = body.getAttribute('data-full-content');
+                    const contentDiv = body.querySelector(`#${id}-content`);
+
+                    // Replace warning and content
+                    body.innerHTML = `
+                        <div style="background: #e8f5e9; border: 1px solid #4caf50; padding: 8px; margin-bottom: 8px; border-radius: 4px; font-size: 12px;">
+                            ✓ Showing full output
+                        </div>
+                        <div class="tool-result" id="${id}-content">${fullContent}</div>
+                    `;
+                    break;
+                }
+            }
+        }
+
+        function renderEvent(event, index) {
+            const eventId = `event-${index}`;
+            const isCollapsed = collapsedStates.has(eventId);
+
+            let badgeClass = 'system';
+            let badgeText = event.kind;
+            let headerTitle = '';
+
+            if (event.kind === 'MessageEvent') {
+                if (event.llm_message?.role === 'user') {
+                    badgeClass = 'user';
+                    badgeText = 'User';
+                    headerTitle = 'User Message';
+                } else if (event.llm_message?.role === 'assistant') {
+                    badgeClass = 'assistant';
+                    badgeText = 'Assistant';
+                    headerTitle = 'Assistant Message';
+                }
+            } else if (event.kind === 'SystemPromptEvent') {
+                badgeClass = 'system';
+                badgeText = 'System';
+                headerTitle = 'System Prompt';
+            } else if (event.kind === 'ActionEvent') {
+                badgeClass = 'tool';
+                badgeText = 'Action';
+                const toolName = event.tool_name || 'unknown';
+                const actionKind = event.action?.kind || '';
+                if (toolName === 'terminal') {
+                    headerTitle = `🔧 Terminal: ${truncate(event.action?.command || '', 60)}`;
+                } else if (toolName === 'file_editor') {
+                    const cmd = event.action?.command || '';
+                    const path = event.action?.path ? ` ${event.action.path.split('/').pop()}` : '';
+                    headerTitle = `📝 File Editor: ${cmd}${path}`;
+                } else if (toolName === 'think') {
+                    headerTitle = `💭 Thinking`;
+                } else {
+                    headerTitle = `🔧 ${toolName}`;
+                }
+            } else if (event.kind === 'ObservationEvent') {
+                badgeClass = 'tool';
+                badgeText = 'Result';
+                const toolName = event.tool_name || 'unknown';
+                if (toolName === 'terminal') {
+                    const exitCode = event.observation?.metadata?.exit_code;
+                    headerTitle = `📤 Terminal Output${exitCode !== undefined ? ` (exit: ${exitCode})` : ''}`;
+                } else if (toolName === 'file_editor') {
+                    headerTitle = `📤 File Editor Result`;
+                } else {
+                    headerTitle = `📤 ${toolName} Result`;
+                }
+            }
+
+            let html = `
+                <div class="event">
+                    <div class="event-header" onclick="toggleCollapse('${eventId}')">
+                        <div class="event-type">
+                            <span class="collapse-icon ${isCollapsed ? 'collapsed' : ''}">▼</span>
+                            <span class="event-badge ${badgeClass}">${badgeText}</span>
+                            <span style="font-weight: 500; margin-left: 8px;">${headerTitle}</span>
+                        </div>
+                        <div class="event-timestamp">${formatTimestamp(event.timestamp)}</div>
+                    </div>
+                    <div class="event-body ${isCollapsed ? 'collapsed' : ''}">
+            `;
+
+            if (event.kind === 'SystemPromptEvent' && event.system_prompt) {
+                html += renderSystemPrompt(event.system_prompt);
+            } else if (event.kind === 'MessageEvent' && event.llm_message) {
+                html += renderMessage(event.llm_message);
+            } else if (event.kind === 'ActionEvent') {
+                html += renderActionEvent(event);
+            } else if (event.kind === 'ObservationEvent') {
+                html += renderObservationEvent(event);
+            } else {
+                html += `<pre>${escapeHtml(JSON.stringify(event, null, 2))}</pre>`;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function renderSystemPrompt(systemPrompt) {
+            return `<div class="system-prompt">${escapeHtml(systemPrompt.text || JSON.stringify(systemPrompt, null, 2))}</div>`;
+        }
+
+        function renderActionEvent(event) {
+            let html = '';
+
+            // Render reasoning/thinking if present
+            if (event.reasoning_content) {
+                html += `<div style="background: #f0f7ff; border-left: 3px solid #2196f3; padding: 12px; margin-bottom: 12px; border-radius: 4px;">
+                    <div style="font-weight: 600; color: #1976d2; margin-bottom: 6px; font-size: 13px;">💭 Reasoning</div>
+                    <div style="color: #333; font-size: 14px; line-height: 1.6;">${escapeHtml(event.reasoning_content)}</div>
+                </div>`;
+            }
+
+            // Render action details
+            if (event.action) {
+                html += renderAction(event.action, event.tool_name);
+            }
+
+            return html;
+        }
+
+        function renderAction(action, toolName) {
+            if (toolName === 'terminal' && action.kind === 'TerminalAction') {
+                return `<div class="tool-call">
+                    <div class="tool-name">💻 Terminal Command</div>
+                    <div class="tool-params"><pre>${escapeHtml(action.command)}</pre></div>
+                    ${action.timeout ? `<div style="color: #666; font-size: 12px; margin-top: 6px;">Timeout: ${action.timeout}s</div>` : ''}
+                </div>`;
+            } else if (toolName === 'file_editor' && action.kind === 'FileEditorAction') {
+                let details = `<div class="tool-call">
+                    <div class="tool-name">📝 File Editor: ${action.command}</div>
+                    <div style="margin-top: 8px;">
+                        <div style="color: #666; font-size: 12px; margin-bottom: 4px;"><strong>Path:</strong> ${escapeHtml(action.path)}</div>`;
+
+                if (action.command === 'str_replace' && action.old_str && action.new_str) {
+                    details += `
+                        <div style="margin-top: 12px;">
+                            <div style="background: #ffebee; border: 1px solid #ef9a9a; border-radius: 4px; padding: 8px; margin-bottom: 8px;">
+                                <div style="color: #c62828; font-weight: 600; font-size: 12px; margin-bottom: 4px;">− Old:</div>
+                                <pre style="margin: 0; font-size: 12px;">${escapeHtml(action.old_str)}</pre>
+                            </div>
+                            <div style="background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 4px; padding: 8px;">
+                                <div style="color: #2e7d32; font-weight: 600; font-size: 12px; margin-bottom: 4px;">+ New:</div>
+                                <pre style="margin: 0; font-size: 12px;">${escapeHtml(action.new_str)}</pre>
+                            </div>
+                        </div>`;
+                } else if (action.command === 'create' && action.file_text) {
+                    details += `
+                        <div style="margin-top: 12px;">
+                            <div style="background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px;">
+                                <div style="color: #666; font-weight: 600; font-size: 12px; margin-bottom: 4px;">File Content:</div>
+                                <pre style="margin: 0; font-size: 12px; max-height: 300px; overflow-y: auto;">${escapeHtml(action.file_text)}</pre>
+                            </div>
+                        </div>`;
+                } else if (action.view_range) {
+                    details += `<div style="color: #666; font-size: 12px;"><strong>View Range:</strong> Lines ${action.view_range[0]}-${action.view_range[1]}</div>`;
+                }
+
+                details += `</div></div>`;
+                return details;
+            } else if (toolName === 'think') {
+                return `<div style="background: #f9f3ff; border-left: 3px solid #9c27b0; padding: 12px; border-radius: 4px;">
+                    <div style="color: #6a1b9a; font-size: 14px; line-height: 1.6;">${escapeHtml(action.thought || 'Thinking...')}</div>
+                </div>`;
+            }
+
+            // Default rendering
+            return `<div class="tool-call">
+                <div class="tool-name">🔧 ${toolName || action.kind}</div>
+                <div class="tool-params"><pre>${escapeHtml(JSON.stringify(action, null, 2))}</pre></div>
+            </div>`;
+        }
+
+        function renderObservationEvent(event) {
+            if (!event.observation) {
+                return '<div style="color: #999;">No observation data</div>';
+            }
+
+            const observation = event.observation;
+            let html = '';
+
+            // Render observation content
+            if (observation.kind === 'TerminalObservation') {
+                const content = Array.isArray(observation.content)
+                    ? observation.content.map(c => c.text || JSON.stringify(c)).join('\n')
+                    : observation.content || '';
+
+                const isError = observation.is_error || observation.exit_code !== 0;
+                const bgColor = isError ? '#ffebee' : '#f5f5f5';
+                const borderColor = isError ? '#ef9a9a' : '#e0e0e0';
+
+                html += `<div class="tool-result" style="background: ${bgColor}; border-color: ${borderColor};">${escapeHtml(content)}</div>`;
+
+                if (observation.metadata) {
+                    const meta = observation.metadata;
+                    html += `<div style="margin-top: 8px; font-size: 12px; color: #666;">`;
+                    if (meta.exit_code !== undefined) html += `Exit Code: ${meta.exit_code} • `;
+                    if (meta.working_dir) html += `Dir: ${escapeHtml(meta.working_dir)} • `;
+                    if (meta.username) html += `User: ${escapeHtml(meta.username)}`;
+                    html += `</div>`;
+                }
+            } else if (observation.kind === 'FileEditorObservation') {
+                const content = Array.isArray(observation.content)
+                    ? observation.content.map(c => c.text || JSON.stringify(c)).join('\n')
+                    : observation.content || '';
+
+                html += `<div class="tool-result">${escapeHtml(content)}</div>`;
+            } else {
+                // Generic observation rendering
+                const content = Array.isArray(observation.content)
+                    ? observation.content.map(c => c.text || JSON.stringify(c)).join('\n')
+                    : (observation.content || JSON.stringify(observation, null, 2));
+
+                html += `<div class="tool-result">${escapeHtml(content)}</div>`;
+            }
+
+            return html;
+        }
+
+        function truncate(str, maxLen) {
+            if (str.length <= maxLen) return str;
+            return str.substring(0, maxLen) + '...';
+        }
+
+        function renderMessage(message) {
+            if (!message.content) return '';
+
+            let html = '';
+            if (Array.isArray(message.content)) {
+                message.content.forEach(item => {
+                    if (item.type === 'text') {
+                        html += `<div class="message-content">${escapeHtml(item.text)}</div>`;
+                    } else if (item.type === 'tool_use') {
+                        html += `<div class="tool-call">
+                            <div class="tool-name">🔧 ${escapeHtml(item.name)}</div>
+                            <div class="tool-params"><pre>${escapeHtml(JSON.stringify(item.input, null, 2))}</pre></div>
+                        </div>`;
+                    } else {
+                        html += `<pre>${escapeHtml(JSON.stringify(item, null, 2))}</pre>`;
+                    }
+                });
+            } else if (typeof message.content === 'string') {
+                html += `<div class="message-content">${escapeHtml(message.content)}</div>`;
+            } else {
+                html += `<pre>${escapeHtml(JSON.stringify(message.content, null, 2))}</pre>`;
+            }
+
+            return html;
+        }
+
+        function renderToolCall(toolCall) {
+            return `
+                <div class="tool-call">
+                    <div class="tool-name">🔧 ${escapeHtml(toolCall.function?.name || toolCall.name || 'Unknown Tool')}</div>
+                    ${toolCall.function?.arguments || toolCall.arguments ?
+                        `<div class="tool-params"><pre>${escapeHtml(typeof (toolCall.function?.arguments || toolCall.arguments) === 'string'
+                            ? toolCall.function?.arguments || toolCall.arguments
+                            : JSON.stringify(toolCall.function?.arguments || toolCall.arguments, null, 2))}</pre></div>`
+                        : ''}
+                </div>
+            `;
+        }
+
+        function renderToolResult(toolResult) {
+            let content = '';
+            if (typeof toolResult === 'string') {
+                content = toolResult;
+            } else if (toolResult.content) {
+                content = Array.isArray(toolResult.content)
+                    ? toolResult.content.map(c => c.text || JSON.stringify(c)).join('\n')
+                    : toolResult.content;
+            } else {
+                content = JSON.stringify(toolResult, null, 2);
+            }
+
+            return `<div class="tool-result">${escapeHtml(content)}</div>`;
+        }
+
+        function toggleCollapse(id) {
+            const isCollapsed = collapsedStates.has(id);
+            if (isCollapsed) {
+                collapsedStates.delete(id);
+            } else {
+                collapsedStates.add(id);
+            }
+
+            // Toggle visibility without re-rendering the whole trace
+            // Find the event header that was clicked and toggle its sibling body
+            const eventBodies = document.querySelectorAll('.event-body');
+            const collapseIcons = document.querySelectorAll('.collapse-icon');
+
+            // Find elements by matching the onclick handler's id
+            eventBodies.forEach((body, index) => {
+                const header = body.previousElementSibling;
+                if (header && header.getAttribute('onclick') === `toggleCollapse('${id}')`) {
+                    body.classList.toggle('collapsed', !isCollapsed);
+                    const icon = header.querySelector('.collapse-icon');
+                    if (icon) {
+                        icon.classList.toggle('collapsed', !isCollapsed);
+                    }
+                }
+            });
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        // View switching functionality
+        function switchView(viewName) {
+            const tabs = document.querySelectorAll('.view-tab');
+            const views = document.querySelectorAll('.view-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            views.forEach(view => view.classList.remove('active'));
+
+            const activeTab = Array.from(tabs).find(tab =>
+                tab.textContent.toLowerCase().includes(viewName)
+            );
+            const activeView = document.getElementById(`${viewName}View`);
+
+            if (activeTab) activeTab.classList.add('active');
+            if (activeView) {
+                activeView.classList.add('active');
+                // Load patch when switching to patch view
+                if (viewName === 'patch' && currentTrace && activeView.children.length === 0) {
+                    loadPatch();
+                }
+            }
+        }
+
+        // Load and render patch file
+        async function loadPatch() {
+            const patchView = document.getElementById('patchView');
+            if (!patchView || !currentTrace) return;
+
+            patchView.innerHTML = '<div class="loading">Loading patch...</div>';
+
+            try {
+                const tracePath = currentTrace._path || currentTrace._filename;
+                console.log('Loading patch for trace:', tracePath);
+
+                // Convert .json to .patch and fetch from configured source
+                const patchPath = tracePath.replace('.json', '.patch');
+                const fetchUrl = TRACES_SOURCE === 'github-raw'
+                    ? `${GITHUB_RAW_BASE_URL}/${patchPath}`
+                    : `/results/${patchPath}`;
+                console.log('Fetching patch from:', fetchUrl);
+
+                const response = await fetch(fetchUrl);
+                console.log('Response status:', response.status);
+                const patchContent = await response.text();
+                console.log('Patch content length:', patchContent.length);
+
+                if (!patchContent || patchContent.trim() === '') {
+                    patchView.innerHTML = `
+                        <div class="no-patch-message">
+                            <div class="no-patch-message-icon">📄</div>
+                            <div>No patch file available for this trace</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                patchView.innerHTML = renderPatch(patchContent);
+            } catch (error) {
+                console.error('Error loading patch:', error);
+                patchView.innerHTML = `
+                    <div class="no-patch-message">
+                        <div class="no-patch-message-icon">⚠️</div>
+                        <div>Error loading patch file</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Render patch content with syntax highlighting
+        function renderPatch(patchContent) {
+            const lines = patchContent.split('\n');
+            let html = '<div class="diff-container">';
+
+            lines.forEach(line => {
+                let className = 'context';
+
+                if (line.startsWith('diff --git') || line.startsWith('index ')) {
+                    className = 'meta';
+                } else if (line.startsWith('+++') || line.startsWith('---')) {
+                    className = 'header';
+                } else if (line.startsWith('@@')) {
+                    className = 'meta';
+                } else if (line.startsWith('+')) {
+                    className = 'add';
+                } else if (line.startsWith('-')) {
+                    className = 'remove';
+                }
+
+                // Remove the +/- prefix for add/remove lines since CSS will add it back
+                let displayLine = line;
+                if (className === 'add' || className === 'remove') {
+                    displayLine = line.substring(1);
+                }
+
+                html += `<div class="diff-line ${className}">${escapeHtml(displayLine)}</div>`;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // Load traces from a directory (if accessed via file:// protocol with proper permissions)
+        // This is mainly for when serving the file via a local server
+        async function loadTracesFromDirectory(path) {
+            // This would require a backend server to work
+            console.log('Directory loading requires a backend server');
+        }
+
+        // Auto-load traces from leaderboard_data.json on page load
+        async function autoLoadTracesFromLeaderboard() {
+            try {
+                // Show loading state
+                if (loadingState) loadingState.style.display = 'block';
+                if (emptyState) emptyState.style.display = 'none';
+
+                const response = await fetch('leaderboard_data.json');
+                if (!response.ok) {
+                    console.log('Could not load leaderboard_data.json');
+                    if (loadingState) loadingState.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Get query parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const modelFilter = urlParams.get('model');
+                const categoryFilter = urlParams.get('category');
+
+                console.log('Filters:', { modelFilter, categoryFilter });
+
+                // Extract all traces from models
+                let allTraces = [];
+                for (const [modelName, modelData] of Object.entries(data.models)) {
+                    if (modelData.traces) {
+                        modelData.traces.forEach(trace => {
+                            // Add path info for lazy loading
+                            trace._path = trace.path;
+                            allTraces.push(trace);
+                        });
+                    }
+                }
+
+                // Apply filters if specified
+                if (modelFilter) {
+                    allTraces = allTraces.filter(trace => {
+                        const tracePath = trace.path || '';
+                        return tracePath.startsWith(modelFilter);
+                    });
+                }
+
+                if (categoryFilter) {
+                    allTraces = allTraces.filter(trace => {
+                        return trace.category === categoryFilter;
+                    });
+                }
+
+                console.log(`Loaded ${allTraces.length} traces from leaderboard_data.json`);
+
+                if (allTraces.length > 0) {
+                    traces = allTraces;
+                    updateRepFilterOptions();
+                    renderTraceList();
+
+                    // Hide loading state
+                    if (loadingState) loadingState.style.display = 'none';
+
+                    // Load first trace or from URL hash
+                    if (window.location.hash.startsWith('#trace/')) {
+                        loadTraceFromUrl();
+                    } else if (traces.length > 0) {
+                        selectTrace(0);
+                    }
+                } else {
+                    // No traces found after filtering
+                    if (loadingState) loadingState.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading traces from leaderboard:', error);
+                if (loadingState) loadingState.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+            }
+        }
+
+        // Auto-load on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            autoLoadTracesFromLeaderboard();
+        });
+    </script>
+</body>
+</html>

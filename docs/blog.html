@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spaghetti Bench</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: #fff;
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .nav-bar {
+            background: #fff;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            color: #333;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        article {
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .post-meta {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 48px 0 20px;
+            color: #333;
+        }
+
+        h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 32px 0 16px;
+            color: #444;
+        }
+
+        p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 20px;
+        }
+
+        strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 24px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: #333;
+            font-size: inherit;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .callout {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 32px 0;
+            border-radius: 4px;
+        }
+
+        .callout p {
+            margin-bottom: 12px;
+        }
+
+        .callout p:last-child {
+            margin-bottom: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 32px 0;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 24px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 32px 0;
+            font-size: 15px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .failure {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .diff-add {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .diff-remove {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 32px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-bar">
+        <a href="/" class="nav-brand">🍝 Spaghetti Bench</a>
+        <div class="nav-links">
+            <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
+            <a href="/blog.html" class="nav-link">Blog</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <article>
+            <h1>Spaghetti Bench: Evaluating AI Agents on Concurrency Bug Fixes</h1>
+            <div class="post-meta">
+                <div>Vasu Vikram, Ao Li, Rohan Padhye</div>
+                <div style="margin-top: 4px;">February 8, 2026 • 10 min read</div>
+            </div>
+
+            <p>
+                Software engineering agents are becoming increasingly prevalent in software development. As these AI-powered
+                tools take on more complex programming tasks, it's crucial to understand their performance across a variety
+                of challenging domains. Benchmarks like <a href="https://www.swebench.com/" target="_blank">SWE-bench</a> [1]
+                have emerged as the standard for measuring coding agent performance on solving real-world software issues,
+                evaluating agents on hundreds of GitHub issues from popular open-source projects.
+            </p>
+
+            <p>
+                However, <strong>concurrency</strong>—a critical aspect of modern software engineering—is notably
+                underrepresented in SWE-bench. Among hundreds of tasks, there is only
+                <a href="https://github.com/astropy/astropy/pull/18692" target="_blank">one example</a> of a race condition.
+                This gap is significant because concurrent programming is fundamental to performance-critical systems,
+                from web servers and databases to distributed systems and mobile applications.
+            </p>
+
+            <p>
+                The challenge with evaluating concurrency bug fixes goes beyond just dataset coverage. SWE-bench validates
+                proposed patches by running specific tests: those that should fail on the buggy code must pass after the fix,
+                while existing tests should continue passing. This approach can work for deterministic bugs, but
+                breaks down for concurrency issues. A test for a concurrency bug may pass or fail depending
+                on thread scheduling—meaning a test might pass even when the underlying bug remains unfixed, simply because
+                the problematic thread interleaving didn't occur during that particular test run.
+            </p>
+
+            <p>
+                We evaluated leading AI coding agents on concurrency bug fixes and found an important insight:
+                without proper testing tools, even the most capable models produce patches that appear correct
+                but silently fail under specific thread interleavings. This post explores how controlled
+                concurrency testing with <a href="https://github.com/cmu-pasta/fray" target="_blank">Fray</a> [2] reveals
+                these limitations and why it's essential for reliable concurrency bug verification.
+            </p>
+
+            <h2>Setup</h2>
+
+            <p>
+                We evaluated six state-of-the-art models using scaffolding from <a href="https://docs.openhands.dev/" target="_blank">OpenHands</a>,
+                an agentic framework for software engineering tasks:
+            </p>
+            <ul style="margin-left: 32px; margin-bottom: 20px;">
+                <li>Claude Opus 4.5</li>
+                <li>Claude Sonnet 4.5</li>
+                <li>OpenAI GPT-5.2</li>
+                <li>Qwen 3 Coder 480B</li>
+                <li>Google Gemini 3 Pro Preview</li>
+                <li>Google Gemini 3 Flash Preview</li>
+            </ul>
+
+            <p>
+                Each model was tested on 39 Java concurrency bugs from our dataset, which includes tasks that Fray was previously
+                evaluated on. This includes 28 single-class programs from SCTBench [3], and 11 bugs from the open source Apache Kafka project. 
+                All of these bugs have the property that running the tests thousands of times would not
+                reliably trigger the bug—the race conditions are too subtle and dependent on specific thread interleavings. However,
+                Fray consistently finds these bugs within seconds.
+            </p>
+
+            <p>
+                We ran each model in two configurations:
+            </p>
+            <ul style="margin-left: 32px; margin-bottom: 20px;">
+                <li><strong>Without Fray:</strong> Agents have access to the default development tools (bash, file editor,
+                test runner)</li>
+                <li><strong>With Fray:</strong> Agents can additionally invoke Fray to test their patches
+                across different thread schedules</li>
+            </ul>
+
+            <p>
+                In both configurations, we used Fray as the final arbiter to verify whether the agent's proposed solution
+                actually fixed the bug. This means that even in the "without Fray" configuration, agents might produce
+                patches they believe are correct (based on their own testing), but we verify correctness using
+                Fray's interleaving exploration. If the agent failed to produce a patch within 20 minutes, we treated the result as a failed case.
+            </p>
+
+            <h2>How agents behave by default</h2>
+
+            <p>
+                Without any additional tooling, AI agents typically verify concurrency fixes by running bash commands to run tests repeatedly:
+            </p>
+
+            <pre><code>for i in {1..100}; do
+    echo "Run $i:";
+    java MyProgram;
+    echo "Exit code: $?";
+done</code></pre>
+
+            <p>
+                The logic is intuitive: if the test passes 10, 20, or even 100 times in a row, the fix must be correct.
+                Unfortunately, <span class="highlight">this approach gives a false sense of confidence</span>. The tests
+                might pass simply because the problematic thread interleaving never occurred during those runs. This often results in the agent 
+                finishing after its first proposed solution, as it assumes that the fix is correct from the test results.
+            </p>
+
+            <h3>Example: WorkStealQueue</h3>
+
+            <p>
+                Let's look at a concrete example from our benchmark: <a href="https://github.com/cmu-pasta/spaghetti-bench/blob/main/benchmarks/SCTBench/chess/WorkStealQueue.java" target="_blank">WorkStealQueue</a>.
+                This is a lock-free work-stealing queue—a concurrent data structure where a single owner thread can
+                <code>push</code> and <code>pop</code> items from one end (the tail), while multiple "stealer" threads
+                grab work from the other end (the head). The test creates items, pushes them to the queue, and then
+                has both the owner and stealers process them. Each item should be processed exactly once, verified by
+                checking that <code>field == 1</code>.
+            </p>
+
+            <p>
+                <strong>The Bug:</strong> The original code has a race condition in the <code>pop()</code> method.
+                When the queue has exactly one element, the owner decrements the tail and checks
+                <code>if (head &lt;= tail)</code>. If a stealer concurrently increments head, both threads might
+                think they successfully got the item, or the owner might read a stale value from the <code>elems</code>
+                array since it's not volatile. This leads to items being processed multiple times or not at all.
+            </p>
+
+            <p>
+                <strong>Claude Sonnet 4.5</strong> attempted this task in both configurations. Without Fray, the agent
+                produced a minimal fix:
+            </p>
+
+            <pre><code>// Changed comparison in pop() method
+-if (readV(head) <= t) {
++if (readV(head) < t) {
+     result[0] = elems[(int) (t & mask)];
+     return true;
+}</code></pre>
+
+            <p>
+                This single-character change (<code>&lt;=</code> to <code>&lt;</code>) tried to fix the boundary condition.
+                However, this doesn't actually solve the problem. The issue isn't just the comparison—it's
+                that the check-then-act sequence is not atomic. Even with <code>&lt;</code>, a stealer can still increment
+                head between the check and the array access, and the owner still reads from a non-volatile array that may
+                have stale values. The agent tested the fix and marked it as complete. However, when we ran final verification:
+            </p>
+
+            <pre><code>Iteration 2616: Error found at step 105
+AssertionError at WorkStealQueue$ObjType.check</code></pre>
+
+            <p>
+                Fray still identified a bug after 2,616 iterations, demonstrating how subtle these race conditions
+                can be. Without Fray to guide its solution, the agent stopped too early with an
+                incomplete solution.
+            </p>
+
+            <p>
+                When agents have access to Fray as a tool call, they can run it to verify fixes across thousands of different thread interleavings,
+                and use it to iterate on solutions that would not have been caught by the repeated unit tests.
+            </p>
+            <p>
+                We can contrast this with the same model on the same task with Fray access. Over the course
+                of 5 refinements of its solution with Fray, the agent produced a <a href="/traces?model=bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0%2Fwith_fray&category=sctbench#trace/bedrock_global.anthropic.claude-sonnet-4-5-20250929-v1_0/with_fray/rep_3/fix_bug/sctbench/WorkStealQueue.json">comprehensive fix</a> addressing multiple race conditions:
+            </p>
+
+            <ul style="margin-left: 32px; margin-bottom: 20px;">
+                <li>Made <code>elems</code> array and <code>mask</code> volatile to ensure visibility across threads</li>
+                <li>Captured <code>mask</code> locally to prevent inconsistent indexing during array resizing</li>
+                <li>Completely rewrote <code>pop()</code> to properly handle the one-element case with locking and double-checking</li>
+                <li>Added stability checks in <code>push()</code> to detect when the array is resized mid-operation</li>
+                <li>Fixed the boundary condition from the first attempt (<code>&lt;=</code> to <code>&lt;</code>)</li>
+            </ul>
+
+            <p>
+                On this patch, Fray verification passed 100,000 iterations with no errors. By providing a stronger verification 
+                as a tool, the agent is able to propose more complex patches, rather than defaulting to the first and often laziest one.
+            </p>
+
+            <h3>Example: KAFKA-17402 </h3>
+
+            <p>
+                A <a href="https://issues.apache.org/jira/browse/KAFKA-17402">real-world </a> from Apache Kafka demonstrates how agents can produce plausible-looking fixes that
+                still fail under controlled-concurrency testing. The bug occurs in <code>DefaultStateUpdater</code>, which manages
+                state restoration for Kafka Streams tasks across multiple threads. When calling <code>getTasks()</code>,
+                tasks could transiently appear in multiple internal queues during state transitions, potentially causing
+                duplicate tasks to be returned.
+            </p>
+
+            <p>
+                <strong>GPT-5.2</strong> (without Fray) analyzed the error message showing the test expected 2 tasks but
+                got 3. The agent performed a detailed root cause analysis:
+            </p>
+
+            <div class="callout" style="background: #f0f7ff; border-left-color: #3b82f6;">
+                <p><strong>Agent's Diagnosis:</strong></p>
+                <p>
+                    <code>DefaultStateUpdater#getTasks()</code> builds its result by streaming across multiple internal
+                    collections (pending adds, <code>updatingTasks</code>, <code>restoredActiveTasks</code>, etc.) and
+                    wraps each element in a new <code>ReadOnlyTask</code> before collecting into a Set. During normal
+                    concurrent operation, a Task can temporarily be present in more than one collection (e.g., after being
+                    added to <code>restoredActiveTasks</code> but before being removed from <code>updatingTasks</code>).
+                </p>
+                <p>
+                    Because each wrapper is a distinct object (<code>ReadOnlyTask</code> has no equals/hashCode), the final
+                    Set can contain duplicates, inflating the size (seen as expected 2, got 3).
+                </p>
+                <p>
+                    <strong>Fix:</strong> De-duplicate the underlying Task objects first, then wrap them.
+                </p>
+            </div>
+
+            <p>
+                Based on this analysis, the agent modified <code>getTasks()</code> to collect tasks into a
+                <code>Set&lt;Task&gt;</code> first (removing transient duplicate visibility of the same task object)
+                and only then map to <code>ReadOnlyTask</code>:
+            </p>
+
+            <pre><code>@Override
+public Set<Task> getTasks() {
+-   return executeWithQueuesLocked(() -> getStreamOfTasks()
+-       .map(ReadOnlyTask::new)
+-       .collect(Collectors.toSet()));
++   return executeWithQueuesLocked(
++       () -> getStreamOfTasks()
++           // Tasks may transiently appear in multiple internal queues during state transitions.
++           // Deduplicate the underlying tasks before wrapping them in ReadOnlyTask to avoid
++           // returning duplicates to callers.
++           .collect(Collectors.toSet())
++           .stream()
++           .map(ReadOnlyTask::new)
++           .collect(Collectors.toSet())
++   );
+}</code></pre>
+
+            <p>
+                The agent's reasoning seems logical—it correctly identified that tasks appear in multiple
+                collections concurrently and diagnosed the issue with <code>ReadOnlyTask</code> wrapper identity. Running the existing gradle unit tests
+                passed so the fix was assumed to be correct.
+            </p>
+
+            <p>
+                However, when Fray verified this patch:
+            </p>
+
+            <pre><code>Iteration 15: Error found at step 8179
+AssertionFailedError: expected: <0> but was: <1></code></pre>
+
+            <p>
+                After 15 iterations, Fray
+                found a scenario where the test still failed. The deduplication approach treated the symptom, not the cause.
+            </p>
+
+            <p>
+                Compare this to the <a href="https://github.com/apache/kafka/pull/18607" target="_blank">actual fix</a>
+                that Kafka developers merged:
+            </p>
+
+            <pre><code>private void maybeCompleteRestoration(final StreamTask task, ...) {
+    ...
+    changelogReader.unregister(changelogPartitions);
+    addToRestoredTasks(task);
+-   updatingTasks.remove(task.id());  // MOVED FROM HERE
+    log.info("Stateful active task " + task.id() + " completed restoration");
+}
+
+private void addToRestoredTasks(final StreamTask task) {
+    restoredActiveTasksLock.lock();
+    try {
+        restoredActiveTasks.add(task);
++       updatingTasks.remove(task.id());  // TO INSIDE THE LOCK
+        log.debug("Active task " + task.id() + " was added to the restored tasks");
+    } finally {
+        restoredActiveTasksLock.unlock();
+    }
+}</code></pre>
+
+            <p>
+                The real issue was that <code>updatingTasks.remove()</code> was called <em>outside</em> the lock, creating
+                a race condition. The correct fix moves this single line <em>inside</em> the lock to ensure atomic state
+                transitions. This is a fundamentally different approach from the agent's deduplication strategy. With its current limited tooling, there was no way to know the fix was insufficient. This suggests agents need better tooling and 
+                reasoning to properly diagnose the root cause of these real-world concurrency issues.
+            </p>
+
+            <h2>Evaluation Summary</h2>
+
+            <p>
+                We evaluated multiple state-of-the-art models on 39 concurrency bug tasks, both with and without Fray.
+                The results reveal different patterns for SCTBench versus real-world Kafka bugs.
+            </p>
+
+            <h3>SCTBench Performance (28 tasks)</h3>
+
+            <p style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; color: #856404;">
+                <strong>TODO:</strong> Update numbers and text for final data.
+            </p>
+
+            <p>
+                On single program benchmarks from SCTBench, Fray provides significant improvements across all models:
+            </p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Pass@1</th>
+                        <th>Pass@1 (+Fray)</th>
+                        <th>Change</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Claude Opus 4.5</td>
+                        <td>92.9%</td>
+                        <td>99.3%</td>
+                        <td class="success">+6.4%</td>
+                    </tr>
+                    <tr>
+                        <td>Claude Sonnet 4.5</td>
+                        <td>93.6%</td>
+                        <td>95.7%</td>
+                        <td class="success">+2.1%</td>
+                    </tr>
+                    <tr>
+                        <td>GPT-5.2</td>
+                        <td>95.7%</td>
+                        <td>100.0%</td>
+                        <td class="success">+4.3%</td>
+                    </tr>
+                    <tr>
+                        <td>Gemini 3.0 Pro</td>
+                        <td>67.9%</td>
+                        <td>90.7%</td>
+                        <td class="success">+22.8%</td>
+                    </tr>
+                    <tr>
+                        <td>Qwen 3 Coder 480B</td>
+                        <td>70.0%</td>
+                        <td>75.7%</td>
+                        <td class="success">+5.7%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                The improvements are substantial, particularly for top-tier models. Fray helps catch false positives where
+                agents produce patches that seem correct but fail under systematic testing. The WorkStealQueue example
+                demonstrates this pattern clearly.
+
+                TODO: why gemini decreases?
+            </p>
+
+            <h3>Real-World Kafka Performance (11 tasks)</h3>
+
+            <p>
+                On real-world Apache Kafka bugs, the picture is very different:
+            </p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Pass@1</th>
+                        <th>Pass@1 (+Fray)</th>
+                        <th>Change</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Claude Opus 4.5</td>
+                        <td>30.9%</td>
+                        <td>34.5%</td>
+                        <td class="success">+3.6%</td>
+                    </tr>
+                    <tr>
+                        <td>Claude Sonnet 4.5</td>
+                        <td>32.7%</td>
+                        <td>36.4%</td>
+                        <td class="success">+3.7%</td>
+                    </tr>
+                    <tr>
+                        <td>GPT-5.2</td>
+                        <td>21.8%</td>
+                        <td>43.6%</td>
+                        <td class="success">+21.8%</td>
+                    </tr>
+                    <tr>
+                        <td>Gemini 3.0 Pro</td>
+                        <td>12.7%</td>
+                        <td>14.5%</td>
+                        <td class="success">+1.8%</td>
+                    </tr>
+                    <tr>
+                        <td>Qwen 3 Coder 480B</td>
+                        <td>18.2%</td>
+                        <td>7.3%</td>
+                        <td class="failure">-10.9%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                Performance on real-world issues is <strong>low with or without Fray</strong>, suggesting that Fray alone
+                is insufficient for these more complex bugs. Real-world concurrency issues in large codebases like Kafka
+                require deeper reasoning about system architecture, state management patterns, and the interaction between
+                multiple components—challenges that go beyond what improved verification tooling can address. This points to a critical gap: while Fray helps agents iterate and verify their fixes, agents still struggle
+                with the initial diagnosis and reasoning required for complex real-world concurrency bugs.
+
+            <h2>Takeaways</h2>
+
+            <p>
+                Our findings reveal both the value and limitations of verification tooling for AI coding agents:
+            </p>
+
+            <h3>1. Stronger Verification Tools Are Necessary to Expand SWE-Agent Evaluations</h3>
+
+            <p>
+                Unit testing alone is insufficient for evaluating software engineering agents across many domains. In concurrency,
+                the non-deterministic nature of thread interleavings means that standard test suites can pass even when bugs
+                remain unfixed. Our results demonstrate that controlled concurrency testing tools like Fray are essential for
+                reliable verification.
+            </p>
+
+            <p>
+                Concurrency is unlikely to be the only domain where standard testing falls short. We expect similar challenges
+                in other areas that involve inherent non-determinism, such as distributed systems and date/time.
+                To meaningfully expand the scope of SWE-agent evaluations beyond deterministic bug fixes, we may
+                need to find creative verification solutions tailored to each problem domain's unique challenges.
+            </p>
+
+            <h3>2. SWE-Agent Concurrency Reasoning Needs Fundamental Improvements</h3>
+
+            <p>
+                The low real-world performance (~25-31%) with or without Fray reveals a critical gap that agents struggle
+                to find the root causes of complex concurrency bugs. Simply reading through code and
+                running unit tests is insufficient to provide the necessary feedback. Improving concurrency reasoning will likely require better debugging tooling and feedback mechanisms beyond
+                what's currently available. We may potentially need ways for agents to:
+            </p>
+            <ul style="margin-left: 32px; margin-bottom: 20px;">
+                <li><strong>Interactively explore thread interleavings:</strong> tools that let agents decide which threads to run
+                  at various breakpoints to understand how race conditions manifest. We have created the <a href="https://plugins.jetbrains.com/plugin/26623-fray-debugger"> Fray Debugger</a>, 
+                for this purpose; identifying the best way to properly expose this to an agent is a promising 
+                next step. </li>
+                <li><strong>Get targeted feedback:</strong> Rather than just "test failed," diagnostic information about which
+                thread interleaving triggered the failure and what invariant was violated</li>
+                <li><strong>Improve inherent concurrency reasoning:</strong> Since concurrency bugs are relatively rare among open source issues,
+                it is possible that targeted concurrency datasets could improve LLM performance on diagnosing the root causes of these concurrency bugs.</li>
+            </ul>
+
+
+            <h2>Try It Yourself</h2>
+
+            <p>
+                Spaghetti Bench is open source and available on <a href="https://github.com/cmu-pasta/spaghetti-bench" target="_blank">GitHub</a>.
+                You can:
+            </p>
+            <ul style="margin-left: 32px; margin-bottom: 20px;">
+                <li>Run the benchmark on your own models (must be LiteLLM supported)</li>
+                <li>Explore the full traces of agent interactions</li>
+                <li>Contribute new concurrency bug examples</li>
+            </ul>
+
+            <p>
+                We also provide a <a href="/leaderboard.html">leaderboard</a> with detailed results for multiple models, and
+                an <a href="/traces.html">examples page</a> where you can browse full conversation traces to see how different
+                agents approach the same bugs.
+            </p>
+
+            <h2>Future Work</h2>
+
+            <p>
+                We plan to expand Spaghetti Bench by adding more real-world concurrency bugs to the dataset and extending
+                support to other languages with mature concurrency testing tools, such as Rust with
+                <a href="https://github.com/awslabs/shuttle" target="_blank">Shuttle</a>.
+            </p>
+
+            <h2>Conclusion</h2>
+
+            <p>
+                Concurrency bugs represent a unique challenge for AI coding agents because standard verification
+                approaches—running tests multiple times—are insufficient most of the time. Our evaluation shows that
+                controlled concurrency testing tools like Fray are essential for expanding the scope of software engineering 
+                agent evaluation by providing more reliable verification and refining initial insufficient patches proposed by 
+                agents.
+            </p>
+
+            <p>
+                As software engineering agents become more capable of producing entire software repositories
+                rapidly and cheaply, equipping them with the right specialized tools for validating solutions
+                in various problem domains becomes increasingly important. Concurrency is just one example, but we expect similar
+                patterns in other areas where standard testing is insufficient.
+            </p>
+
+            <h2>References</h2>
+
+            <ol style="margin-left: 32px; font-size: 15px; line-height: 1.8;">
+                <li style="margin-bottom: 12px;">
+                    Jimenez, Carlos E., et al. "Swe-bench: Can language models resolve real-world github issues?"
+                    <em>arXiv preprint arXiv:2310.06770</em> (2023).
+                </li>
+                <li style="margin-bottom: 12px;">
+                    Li, Ao, et al. "Fray: An Efficient General-Purpose Concurrency Testing Platform for the JVM."
+                    <em>Proceedings of the ACM on Programming Languages</em> 9.OOPSLA2 (2025): 4035-4063.
+                </li>
+                <li style="margin-bottom: 12px;">
+                    Thomson, Paul, Alastair F. Donaldson, and Adam Betts. "Concurrency testing using schedule bounding: An empirical study."
+                    <em>Proceedings of the 19th ACM SIGPLAN symposium on Principles and practice of parallel programming</em> (2014).
+                </li>
+            </ol>
+        </article>
+
+        <footer>
+            <p>Built by <a href="https://github.com/cmu-pasta" target="_blank">CMU PASTA Lab</a></p>
+        </footer>
+    </div>
+</body>
+</html>
