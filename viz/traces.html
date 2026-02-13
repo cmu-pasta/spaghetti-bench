@@ -591,18 +591,26 @@
     <nav class="nav-bar">
         <a href="/" class="nav-brand">🍝 Spaghetti Bench</a>
         <div class="nav-links">
-            <a href="/leaderboard" class="nav-link">Leaderboard</a>
-            <a href="/blog" class="nav-link">Blog</a>
+            <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
+            <a href="/blog.html" class="nav-link">Blog</a>
         </div>
     </nav>
     <div class="container">
         <div class="sidebar">
             <div class="sidebar-header">
                 <h1>Traces<span class="status-indicator" id="statusIndicator"></span></h1>
-                <div class="auto-reload-label" id="autoReloadLabel">Auto-reload enabled</div>
-                <div class="file-input-wrapper">
-                    <input type="file" id="fileInput" accept=".json" multiple>
-                </div>
+            </div>
+            <div class="filter-box">
+                <label for="modelFilter">Model:</label>
+                <select id="modelFilter">
+                    <option value="all">All Models</option>
+                </select>
+            </div>
+            <div class="filter-box">
+                <label for="categoryFilter">Category:</label>
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                </select>
             </div>
             <div class="filter-box" id="repFilterBox" style="display: none;">
                 <label for="repFilter">Repetition:</label>
@@ -614,7 +622,11 @@
                 <input type="text" id="searchInput" placeholder="Search traces...">
             </div>
             <div class="trace-list" id="traceList">
-                <div class="empty-state">
+                <div class="empty-state" id="loadingState">
+                    <div class="empty-state-icon">⏳</div>
+                    <div class="empty-state-title">Loading traces...</div>
+                </div>
+                <div class="empty-state" id="emptyState" style="display: none;">
                     <div class="empty-state-icon">📁</div>
                     <div class="empty-state-title">No traces loaded</div>
                     <div class="empty-state-text">Upload JSON trace files to get started</div>
@@ -622,11 +634,7 @@
             </div>
         </div>
         <div class="main-content" id="mainContent">
-            <div class="empty-state">
-                <div class="empty-state-icon">👈</div>
-                <div class="empty-state-title">Select a trace</div>
-                <div class="empty-state-text">Choose a trace from the sidebar to view details</div>
-            </div>
+            <!-- Content will be populated when a trace is selected -->
         </div>
     </div>
 
@@ -645,27 +653,106 @@
     </template>
 
     <script>
+        // Configuration for trace loading
+        const TRACES_SOURCE = 'local'; // 'local' or 'github-raw'
+        const GITHUB_RAW_BASE_URL = 'https://raw.githubusercontent.com/cmu-pasta/spaghetti-bench/main/results'; // Update repo name!
+
         let traces = [];
+        let allTraces = []; // Store all traces before filtering
         let currentTrace = null;
         let collapsedStates = new Set();
         let selectedRep = 'all';
+        let selectedModel = 'all';
+        let selectedCategory = 'all';
+        let traceCache = new Map(); // Cache for loaded trace JSON files
 
-        const fileInput = document.getElementById('fileInput');
         const traceList = document.getElementById('traceList');
         const mainContent = document.getElementById('mainContent');
         const searchInput = document.getElementById('searchInput');
         const statusIndicator = document.getElementById('statusIndicator');
-        const autoReloadLabel = document.getElementById('autoReloadLabel');
         const repFilter = document.getElementById('repFilter');
+        const modelFilter = document.getElementById('modelFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
         const repFilterBox = document.getElementById('repFilterBox');
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
 
-        fileInput.addEventListener('change', handleFileSelect);
         searchInput.addEventListener('input', handleSearch);
+        modelFilter.addEventListener('change', handleModelFilter);
+        categoryFilter.addEventListener('change', handleCategoryFilter);
         repFilter.addEventListener('change', handleRepFilter);
+
+        function handleModelFilter(e) {
+            selectedModel = e.target.value;
+            applyFilters();
+        }
+
+        function handleCategoryFilter(e) {
+            selectedCategory = e.target.value;
+            applyFilters();
+        }
 
         function handleRepFilter(e) {
             selectedRep = e.target.value;
             renderTraceList(searchInput.value);
+        }
+
+        function applyFilters() {
+            // Filter allTraces based on model and category
+            traces = allTraces.filter(trace => {
+                // Filter by model
+                if (selectedModel !== 'all') {
+                    const path = trace._path || '';
+                    const modelMatch = path.split('/')[0];
+                    if (modelMatch !== selectedModel) {
+                        return false;
+                    }
+                }
+
+                // Filter by category
+                if (selectedCategory !== 'all') {
+                    const traceCategory = trace.category || trace.benchmark_category || '';
+                    if (traceCategory !== selectedCategory) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            updateRepFilterOptions();
+            renderTraceList(searchInput.value);
+        }
+
+        function updateFilterOptions() {
+            // Extract unique models from trace paths
+            const models = new Set();
+            allTraces.forEach(trace => {
+                const path = trace._path || '';
+                const modelMatch = path.split('/')[0];
+                if (modelMatch) {
+                    models.add(modelMatch);
+                }
+            });
+
+            // Populate model filter
+            const sortedModels = Array.from(models).sort();
+            modelFilter.innerHTML = '<option value="all">All Models</option>' +
+                sortedModels.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+
+            // Extract unique categories
+            const categories = new Set();
+            allTraces.forEach(trace => {
+                const cat = trace.category || trace.benchmark_category;
+                if (cat) {
+                    categories.add(cat);
+                }
+            });
+
+            // Populate category filter
+            const sortedCategories = Array.from(categories).sort();
+            categoryFilter.innerHTML = '<option value="all">All Categories</option>' +
+                sortedCategories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         }
 
         function updateRepFilterOptions() {
@@ -706,10 +793,7 @@
             const files = Array.from(e.target.files);
             setLoadingStatus(true);
 
-            // Hide auto-reload label in manual mode
-            if (autoReloadLabel) {
-                autoReloadLabel.style.display = 'none';
-            }
+            // Remove this block - no longer needed
 
             Promise.all(files.map(file => {
                 return new Promise((resolve, reject) => {
@@ -799,8 +883,11 @@
             }).join('');
         }
 
-        function selectTrace(index, updateUrl = true) {
-            currentTrace = traces[index];
+        async function selectTrace(index, updateUrl = true) {
+            const trace = traces[index];
+
+            // Fetch full content if not already loaded
+            currentTrace = await fetchTraceContent(trace);
             collapsedStates.clear();
 
             // Collapse system prompt and setup/verify outputs by default
@@ -854,6 +941,48 @@
             }
         });
 
+        // Fetch full trace content (lazy loading from GitHub Release if needed)
+        async function fetchTraceContent(trace) {
+            const tracePath = trace._path || trace._filename;
+
+            // Check cache first
+            if (traceCache.has(tracePath)) {
+                return traceCache.get(tracePath);
+            }
+
+            // If trace already has full content (events array), return it
+            if (trace.events && trace.events.length > 0) {
+                traceCache.set(tracePath, trace);
+                return trace;
+            }
+
+            // Otherwise, fetch from source
+            try {
+                let fetchUrl;
+                if (TRACES_SOURCE === 'github-raw') {
+                    fetchUrl = `${GITHUB_RAW_BASE_URL}/${tracePath}`;
+                } else {
+                    fetchUrl = `/results/${tracePath}`;
+                }
+
+                console.log('Fetching full trace from:', fetchUrl);
+                const response = await fetch(fetchUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const fullTrace = await response.json();
+                // Merge metadata with full content
+                const mergedTrace = { ...trace, ...fullTrace };
+                traceCache.set(tracePath, mergedTrace);
+                return mergedTrace;
+            } catch (error) {
+                console.error('Error fetching trace:', error);
+                // Return partial trace if fetch fails
+                return trace;
+            }
+        }
+
         function renderTrace() {
             if (!currentTrace) {
                 mainContent.innerHTML = `
@@ -877,7 +1006,7 @@
                     <div class="content-title">${escapeHtml(trace.instance_id || trace._filename)} ${successBadge}</div>
                     <div class="content-meta">
                         <div class="meta-item"><span class="meta-label">Task:</span> ${escapeHtml(trace.task_type || 'Unknown')}</div>
-                        <div class="meta-item"><span class="meta-label">Category:</span> ${escapeHtml(trace.benchmark_category || 'N/A')}</div>
+                        <div class="meta-item"><span class="meta-label">Category:</span> ${escapeHtml(trace.category || trace.benchmark_category || 'N/A')}</div>
                         ${trace.model_id ? `<div class="meta-item"><span class="meta-label">Model:</span> ${escapeHtml(trace.model_id)}</div>` : ''}
                         ${trace.events && trace.events.length ? `<div class="meta-item"><span class="meta-label">Events:</span> ${trace.events.length}</div>` : ''}
                     </div>
@@ -915,6 +1044,14 @@
                 trace.events.forEach((event, index) => {
                     timelineHtml += renderEvent(event, index);
                 });
+            } else {
+                timelineHtml += `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <div class="empty-state-title">Loading trace details...</div>
+                        <div class="empty-state-text">Fetching full trace content</div>
+                    </div>
+                `;
             }
 
             timelineHtml += '</div>';
@@ -1331,9 +1468,11 @@
                 const tracePath = currentTrace._path || currentTrace._filename;
                 console.log('Loading patch for trace:', tracePath);
 
-                // Convert .json to .patch and fetch directly from results directory
+                // Convert .json to .patch and fetch from configured source
                 const patchPath = tracePath.replace('.json', '.patch');
-                const fetchUrl = `/results/${patchPath}`;
+                const fetchUrl = TRACES_SOURCE === 'github-raw'
+                    ? `${GITHUB_RAW_BASE_URL}/${patchPath}`
+                    : `/results/${patchPath}`;
                 console.log('Fetching patch from:', fetchUrl);
 
                 const response = await fetch(fetchUrl);
@@ -1402,6 +1541,92 @@
             // This would require a backend server to work
             console.log('Directory loading requires a backend server');
         }
+
+        // Auto-load traces from leaderboard_data.json on page load
+        async function autoLoadTracesFromLeaderboard() {
+            try {
+                // Show loading state
+                if (loadingState) loadingState.style.display = 'block';
+                if (emptyState) emptyState.style.display = 'none';
+
+                const response = await fetch('leaderboard_data.json');
+                if (!response.ok) {
+                    console.log('Could not load leaderboard_data.json');
+                    if (loadingState) loadingState.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                    return;
+                }
+
+                const data = await response.json();
+
+                // Get query parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const modelFilter = urlParams.get('model');
+                const categoryFilter = urlParams.get('category');
+
+                console.log('Filters:', { modelFilter, categoryFilter });
+
+                // Extract all traces from models
+                let loadedTraces = [];
+                for (const [modelName, modelData] of Object.entries(data.models)) {
+                    if (modelData.traces) {
+                        modelData.traces.forEach(trace => {
+                            // Add path info for lazy loading
+                            trace._path = trace.path;
+                            loadedTraces.push(trace);
+                        });
+                    }
+                }
+
+                // Apply URL filters if specified (for backward compatibility with leaderboard links)
+                if (modelFilter) {
+                    loadedTraces = loadedTraces.filter(trace => {
+                        const tracePath = trace.path || '';
+                        return tracePath.startsWith(modelFilter);
+                    });
+                }
+
+                if (categoryFilter) {
+                    loadedTraces = loadedTraces.filter(trace => {
+                        return trace.category === categoryFilter;
+                    });
+                }
+
+                console.log(`Loaded ${loadedTraces.length} traces from leaderboard_data.json`);
+
+                if (loadedTraces.length > 0) {
+                    // Store all traces and populate filter options
+                    allTraces = loadedTraces;
+                    traces = allTraces;
+                    updateFilterOptions();
+                    updateRepFilterOptions();
+                    renderTraceList();
+
+                    // Hide loading state
+                    if (loadingState) loadingState.style.display = 'none';
+
+                    // Load first trace or from URL hash
+                    if (window.location.hash.startsWith('#trace/')) {
+                        loadTraceFromUrl();
+                    } else if (traces.length > 0) {
+                        selectTrace(0);
+                    }
+                } else {
+                    // No traces found after filtering
+                    if (loadingState) loadingState.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading traces from leaderboard:', error);
+                if (loadingState) loadingState.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+            }
+        }
+
+        // Auto-load on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            autoLoadTracesFromLeaderboard();
+        });
     </script>
 </body>
 </html>

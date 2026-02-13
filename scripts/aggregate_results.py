@@ -235,7 +235,7 @@ if __name__ == "__main__":
 
     script_dir = Path(__file__).resolve().parent
     results_dir = script_dir.parent / "results"
-    output_file = script_dir / "leaderboard_data.json"
+    output_file = script_dir.parent / "docs" / "leaderboard_data.json"
     tasks_file = script_dir.parent / "src" / "concurrency_bench" / "all.jsonl"
 
     if len(sys.argv) > 1:

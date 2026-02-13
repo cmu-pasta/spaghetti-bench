@@ -1,6 +1,4 @@
-<a href="https://github.com/cmu-pasta/spaghetti-bench">
-  <img src="./logo/spaghettibench-high-resolution-logo-transparent.png" width="512" alt="logo"/>
-</a>
+# 🍝 Spaghetti Bench
 
 A benchmark for evaluating AI coding agents on concurrency bug tasks.
 
@@ -13,7 +11,7 @@ There are two ways to run Spaghetti Bench:
 Pull the pre-built Docker image:
 
 ```bash
-docker pull ghcr.io/cmu-pasta/spaghetti-bench:latest
+docker pull vasumv/spaghetti-bench:latest
 ```
 
 Or build from source using Nix:
@@ -105,15 +103,14 @@ python src/concurrency_bench/run_agent.py \
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--tasks-file` | Yes | Path to JSONL file containing tasks |
-| `--task-type` | Yes | Task type: `fix_bug` or `trigger_bug` |
+| `--task-type` | Yes | Task type: `fix_bug` |
 | `--model-id` | Yes | Model ID (must be LiteLLM compatible) |
 | `--instance-id` | No | Run only the specified task |
 | `--results-dir` | No | Directory to save results (default: `results/`) |
-| `--enable-fray-tools` | No | Give agent access to Fray debugging tools |
+| `--enable-fray-tools` | No | Give agent access to Fray rerun tool |
 | `--keep-result` | No | Keep temporary workspace after completion |
-| `--max-workers` | No | Docker only: Max parallel workers |
-| `--memory` | No | Docker only: Memory limit (e.g., `16g`) |
-| `--cpus` | No | Docker only: CPU limit (e.g., `8`) |
+| `--repetition` | No | Repetition/experiment ID for results path |
+| `--timeout` | No | Agent execution timeout in seconds (default: 1200 = 20 minutes) |
 
 ## Output
 
@@ -166,7 +163,7 @@ Each `.patch` file contains a git diff of the changes made by the agent.
 
 ### Trace Visualizer
 
-View agent conversations interactively:
+View your local agent conversations interactively:
 
 ```bash
 cd viz
@@ -175,29 +172,6 @@ python3 serve_traces.py
 
 Then open http://localhost:8001 in your browser.
 
-**Features:**
-- Interactive timeline of agent events
-- GitHub-style patch diff viewer
-- Auto-loading from results directory
-- Shareable trace URLs
-- Search and filter by model/category
-
-### Leaderboard
-
-Generate aggregated results:
-
-```bash
-cd viz
-python3 aggregate_results.py
-```
-
-This creates `leaderboard_data.json` with:
-- Pass@1 and Pass@5 metrics for each model
-- Breakdown by benchmark category
-- Model rankings
-
-View the leaderboard by opening `viz/index.html` in a browser.
-
 ## Benchmarks
 
 ### SCTBench
@@ -205,9 +179,6 @@ View the leaderboard by opening `viz/index.html` in a browser.
 SCTBench is a suite of concurrency bugs translated to Java, located in `benchmarks/SCTBench/`:
 
 - **cs/origin/** - Original bugs (races, atomicity violations, deadlocks)
-- **cs/hard/** - Challenging variants with more threads
-- **cb/** - Concurrent data structure bugs
-- **chess/** - Work-stealing queue bugs
 
 ### Real-World Projects
 
@@ -219,16 +190,14 @@ Real-world bugs from open-source projects:
 
 ## Architecture
 
-### Three-Layer Design
-
 1. **Tasks** (`src/concurrency_bench/tasks/`)
    - `FixBugTask`: Identify and fix concurrency bugs
-   - `TriggerBugTask`: Write test cases that reproduce bugs
+   - `TriggerBugTask` (WIP): Write test cases that reproduce bugs
    - Task loaders handle building and running benchmarks
 
 2. **Agents** (`src/concurrency_bench/agents/`)
    - `FixBugAgent`: Specialized in fixing concurrency issues
-   - `TriggerBugAgent`: Specialized in creating reproducible test cases
+   - `TriggerBugAgent` (WIP): Specialized in creating reproducible test cases
    - Built on [OpenHands Agent SDK](https://docs.openhands.dev/sdk/)
 
 3. **Runner** (`src/concurrency_bench/run_agent.py`)
@@ -268,9 +237,12 @@ Tasks are defined in JSONL format (one JSON object per line):
 ### Adding New Benchmarks
 
 1. Add benchmark files to `benchmarks/`
-2. Create a task loader in `src/concurrency_bench/tasks/loaders/`
+2. Create a task loader in `src/concurrency_bench/tasks/loaders/` See `kafka_loader.py` as an example.
 3. Add task entries to a JSONL file
 4. Run with `--tasks-file your_tasks.jsonl`
+
+Note: you must first verify that Fray is consistently able to find the bug for each new task.
+Otherwise, the setup step will fail and the task will not execute.
 
 ### Modifying the Docker Image
 
@@ -280,8 +252,6 @@ The Docker image is built from `flake.nix`. After making changes:
 nix build .#dockerImage
 docker load < result
 ```
-
-**Note:** Python code changes don't require rebuilding - `run_agent.sh` mounts the local directory.
 
 ## Citation
 
@@ -296,8 +266,8 @@ docker load < result
 
 ## License
 
-This project is licensed under the MIT License - see LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to create an issue / submit PRs.

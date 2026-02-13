@@ -15,9 +15,9 @@ import mimetypes
 PORT = 8001
 # Use absolute path resolution to avoid issues with working directory changes
 SCRIPT_DIR = Path(__file__).resolve().parent
-RESULTS_DIR = SCRIPT_DIR.parent / "results_reverified"
+RESULTS_DIR = SCRIPT_DIR.parent / "results"
 INDEX_PATH = SCRIPT_DIR / "index.html"
-VISUALIZER_PATH = SCRIPT_DIR / "trace_visualizer.html"
+VISUALIZER_PATH = SCRIPT_DIR / "traces.html"
 LEADERBOARD_PATH = SCRIPT_DIR / "leaderboard.html"
 BLOG_PATH = SCRIPT_DIR / "blog.html"
 LEADERBOARD_DATA_PATH = SCRIPT_DIR / "leaderboard_data.json"
@@ -73,6 +73,12 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
         if path.startswith("/api/patch/"):
             patch_path = path[len("/api/patch/"):]
             self.serve_patch(patch_path)
+            return
+
+        # Serve trace files from results directory
+        if path.startswith("/results/"):
+            trace_path = path[len("/results/"):]
+            self.serve_result_file(trace_path)
             return
 
         # Serve static files
@@ -404,6 +410,40 @@ class TraceServerHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(content.encode('utf-8'))
         except Exception as e:
             self.send_error(500, f"Error serving trace: {str(e)}")
+
+    def serve_result_file(self, file_path):
+        """Serve a file from the results directory (JSON or patch)."""
+        try:
+            # URL-decode the path
+            decoded_path = unquote(file_path)
+            full_path = RESULTS_DIR / decoded_path
+            print(f"[RESULTS] Serving file: {file_path} -> {full_path}")
+
+            # Security check: ensure the path is within RESULTS_DIR
+            if not str(full_path.resolve()).startswith(str(RESULTS_DIR.resolve())):
+                print(f"[RESULTS] Access denied for: {full_path}")
+                self.send_error(403, "Access denied")
+                return
+
+            if not full_path.exists():
+                print(f"[RESULTS] File not found: {full_path}")
+                self.send_error(404, "File not found")
+                return
+
+            # Determine content type
+            content_type = mimetypes.guess_type(str(full_path))[0] or 'application/octet-stream'
+
+            with open(full_path, 'rb') as f:
+                content = f.read()
+
+            self.send_response(200)
+            self.send_header('Content-type', content_type)
+            self.send_header('Content-Length', len(content))
+            self.end_headers()
+            self.wfile.write(content)
+        except Exception as e:
+            print(f"[RESULTS] Error serving file: {str(e)}")
+            self.send_error(500, f"Error serving file: {str(e)}")
 
     def serve_patch(self, patch_path):
         """Serve a patch file corresponding to a trace."""

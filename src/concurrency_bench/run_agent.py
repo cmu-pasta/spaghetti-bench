@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import traceback
-from concurrent.futures import ProcessPoolExecutor, as_completed
+import signal
 from pathlib import Path
 
 from concurrency_bench.agents import FixBugAgent, TriggerBugAgent
@@ -17,6 +17,16 @@ from concurrency_bench.task_config import TaskConfig
 from concurrency_bench.tasks import loaders
 from concurrency_bench.tasks.fix_bug import FixBugTask
 from concurrency_bench.tasks.trigger_bug import TriggerBugTask
+
+
+class TimeoutError(Exception):
+    """Raised when agent execution times out."""
+    pass
+
+
+def timeout_handler(signum, frame):
+    """Signal handler for timeout."""
+    raise TimeoutError("Agent execution timed out")
 
 
 def load_tasks(tasks_file: Path) -> list[TaskConfig]:
@@ -95,6 +105,7 @@ def run_task(
     enable_fray_tools: bool = False,
     keep_result: bool = False,
     repetition: int | None = None,
+    timeout: int = 1200,
 ):
     """Run a single task with the specified agent.
 
@@ -255,9 +266,18 @@ def run_task(
 
         # Run the agent (unless it's run_gold which already ran)
         if task_type != "run_gold":
-            print("Starting agent...")
-            conversation = agent.run_agent()
-            print("\nAgent finished!")
+            print(f"Starting agent (timeout: {timeout}s)...")
+            # Set up timeout
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(timeout)
+            try:
+                conversation = agent.run_agent()
+                signal.alarm(0)  # Cancel the alarm
+                print("\nAgent finished!")
+            except TimeoutError as e:
+                signal.alarm(0)  # Cancel the alarm
+                print(f"\n{e}")
+                raise
 
         # Verify the result
         print("\nVerifying results...")
@@ -360,12 +380,6 @@ def main():
         help="Directory to save conversation results (default: results/)",
     )
     parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=1,
-        help="Maximum number of parallel workers (default: 1)",
-    )
-    parser.add_argument(
         "--enable-fray-tools",
         action="store_true",
         help="Enable Fray-specific debugging tools (rerun_fray, replay_fray) for fix_bug tasks",
@@ -380,6 +394,12 @@ def main():
         type=int,
         default=None,
         help="Repetition/experiment ID to include in results path (e.g., 1, 2, 3)",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=1200,
+        help="Timeout for agent execution in seconds (default: 1200 = 20 minutes)",
     )
 
     args = parser.parse_args()
@@ -397,72 +417,48 @@ def main():
             return 1
         print(f"Running single task: {args.instance_id}")
 
-    # Run tasks
+    # Run tasks sequentially
     results = []
     skipped = 0
 
-    if args.max_workers == 1:
-        # Sequential execution
-        print("Running tasks sequentially")
-        for task in tasks:
-            try:
-                result = run_task(
-                    task_config=task,
-                    task_type=args.task_type,
-                    model_id=args.model_id,
-                    base_path=args.base_path,
-                    results_dir=args.results_dir,
-                    api_key=args.api_key,
-                    enable_fray_tools=args.enable_fray_tools,
-                    keep_result=args.keep_result,
-                    repetition=args.repetition,
-                )
-                if result.success is None:
-                    # Task was skipped
-                    skipped += 1
-                    print(f"Skipped: {task.instance_id}")
-                else:
-                    results.append(
-                        {
-                            "instance_id": task.instance_id,
-                            "success": result.success,
-                        }
-                    )
-                    print(f"Completed: {task.instance_id} - Success: {result.success}")
-            except Exception as e:
-                tb = traceback.format_exc()
-                print(tb)
-                print(f"Error running task {task.instance_id}: {e}")
+    print("Running tasks sequentially")
+    for task in tasks:
+        try:
+            result = run_task(
+                task_config=task,
+                task_type=args.task_type,
+                model_id=args.model_id,
+                base_path=args.base_path,
+                results_dir=args.results_dir,
+                api_key=args.api_key,
+                enable_fray_tools=args.enable_fray_tools,
+                keep_result=args.keep_result,
+                repetition=args.repetition,
+                timeout=args.timeout,
+            )
+            if result.success is None:
+                # Task was skipped
+                skipped += 1
+                print(f"Skipped: {task.instance_id}")
+            else:
                 results.append(
                     {
                         "instance_id": task.instance_id,
-                        "success": False,
-                        "error": str(e),
+                        "success": result.success,
                     }
                 )
-    else:
-        # Parallel execution
-        print(f"Running tasks in parallel with {args.max_workers} workers")
-        with ProcessPoolExecutor(max_workers=args.max_workers) as executor:
-            # Submit all tasks
-            future_to_task = {
-                executor.submit(
-                    run_task,
-                    task_config=task,
-                    task_type=args.task_type,
-                    model_id=args.model_id,
-                    base_path=args.base_path,
-                    results_dir=args.results_dir,
-                    api_key=args.api_key,
-                    enable_fray_tools=args.enable_fray_tools,
-                    keep_result=args.keep_result,
-                    repetition=args.repetition,
-                ): task
-                for task in tasks
-            }
-
-            # Process results as they complete
-            for future in as_completed(future_to_task):
+                print(f"Completed: {task.instance_id} - Success: {result.success}")
+        except Exception as e:
+            tb = traceback.format_exc()
+            print(tb)
+            print(f"Error running task {task.instance_id}: {e}")
+            results.append(
+                {
+                    "instance_id": task.instance_id,
+                    "success": False,
+                    "error": str(e),
+                }
+            )
                 task = future_to_task[future]
                 try:
                     result = future.result()
