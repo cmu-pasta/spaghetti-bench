@@ -56,6 +56,14 @@ uv sync
 pip install -e .
 ```
 
+**Build JUnit runner:**
+
+```bash
+cd helpers/junit-runner
+./gradlew build
+cd ../..
+```
+
 **Set API key:**
 
 ```bash
