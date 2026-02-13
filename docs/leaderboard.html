@@ -283,10 +283,10 @@
 </head>
 <body>
     <nav class="nav-bar">
-        <a href="/" class="nav-brand">🍝 Spaghetti Bench</a>
+        <a href="./" class="nav-brand">🍝 Spaghetti Bench</a>
         <div class="nav-links">
-            <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
-            <a href="/blog.html" class="nav-link">Blog</a>
+            <a href="./leaderboard.html" class="nav-link">Leaderboard</a>
+            <a href="./blog.html" class="nav-link">Blog</a>
         </div>
     </nav>
     <div class="page-content">
@@ -402,7 +402,7 @@
                 const filterKey = `${stats.model_id}/${stats.config}`;
                 // Include category filter if not 'all'
                 const categoryParam = categoryFilter !== 'all' ? `&category=${encodeURIComponent(categoryFilter)}` : '';
-                const modelLink = `/traces.html?model=${encodeURIComponent(filterKey)}${categoryParam}`;
+                const modelLink = `./traces.html?model=${encodeURIComponent(filterKey)}${categoryParam}`;
 
                 html += '<tr>';
                 html += `<td class="rank ${rankClass}">#${rank}</td>`;
