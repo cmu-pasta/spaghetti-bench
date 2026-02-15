@@ -49,7 +49,7 @@ docker run -it --rm \
 # Clone and build Fray
 git clone https://github.com/cmu-pasta/fray.git
 cd fray
-./gradlew shadowJar
+./gradlew build
 
 # Add to PATH (add to ~/.bashrc or ~/.zshrc)
 export PATH=$PATH:/path/to/fray/build/install/fray/bin
