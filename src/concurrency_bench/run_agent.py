@@ -5,10 +5,10 @@ import argparse
 import json
 import os
 import shutil
+import signal
 import subprocess
 import tempfile
 import traceback
-import signal
 from pathlib import Path
 
 from concurrency_bench.agents import FixBugAgent, TriggerBugAgent
@@ -21,6 +21,7 @@ from concurrency_bench.tasks.trigger_bug import TriggerBugTask
 
 class TimeoutError(Exception):
     """Raised when agent execution times out."""
+
     pass
 
 
@@ -132,9 +133,22 @@ def run_task(
     fray_mode = "with_fray" if enable_fray_tools else "without_fray"
 
     if repetition is not None:
-        task_results_dir = results_dir / sanitized_model_id / fray_mode / f"rep_{repetition}" / task_type / task_config.benchmark_category
+        task_results_dir = (
+            results_dir
+            / sanitized_model_id
+            / fray_mode
+            / f"rep_{repetition}"
+            / task_type
+            / task_config.benchmark_category
+        )
     else:
-        task_results_dir = results_dir / sanitized_model_id / fray_mode / task_type / task_config.benchmark_category
+        task_results_dir = (
+            results_dir
+            / sanitized_model_id
+            / fray_mode
+            / task_type
+            / task_config.benchmark_category
+        )
 
     result_file = task_results_dir / f"{task_config.instance_id}.json"
     patch_file = task_results_dir / f"{task_config.instance_id}.patch"
@@ -150,9 +164,12 @@ def run_task(
         print(f"{'=' * 80}\n")
         # Return a mock result indicating it was skipped
         from concurrency_bench.tasks.task import TaskOutput
+
         return TaskOutput(success=None, verify_output="Skipped - result already exists")
     elif json_exists or patch_exists:
-        print(f"⚠️  Partial result exists (JSON: {json_exists}, Patch: {patch_exists}), will re-run task")
+        print(
+            f"⚠️  Partial result exists (JSON: {json_exists}, Patch: {patch_exists}), will re-run task"
+        )
     else:
         print(f"No existing result found, running task...")
 
@@ -224,7 +241,9 @@ def run_task(
         elif task_type == "run_gold":
             # Golden agent: apply patch from URL
             if task_config.patch_url is None:
-                raise ValueError(f"Task {task_config.instance_id} has no patch_url for run_gold task type")
+                raise ValueError(
+                    f"Task {task_config.instance_id} has no patch_url for run_gold task type"
+                )
 
             task_obj = FixBugTask(workdir=workdir, loader=task_loader)
 
@@ -459,32 +478,6 @@ def main():
                     "error": str(e),
                 }
             )
-                task = future_to_task[future]
-                try:
-                    result = future.result()
-                    if result.success is None:
-                        # Task was skipped
-                        skipped += 1
-                        print(f"Skipped: {task.instance_id}")
-                    else:
-                        results.append(
-                            {
-                                "instance_id": task.instance_id,
-                                "success": result.success,
-                            }
-                        )
-                        print(f"Completed: {task.instance_id} - Success: {result.success}")
-                except Exception as e:
-                    tb = traceback.format_exc()
-                    print(tb)
-                    print(f"Error running task {task.instance_id}: {e}")
-                    results.append(
-                        {
-                            "instance_id": task.instance_id,
-                            "success": False,
-                            "error": str(e),
-                        }
-                    )
 
     # Print summary
     print(f"\n{'=' * 80}")
