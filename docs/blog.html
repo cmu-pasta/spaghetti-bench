@@ -267,7 +267,7 @@
         <article>
             <h1>Spaghetti Bench: Evaluating AI Agents on Concurrency Bug Fixes</h1>
             <div class="post-meta">
-                <div>Vasu Vikram, Ao Li, Rohan Padhye</div>
+                <div><a href="https://vasumv.github.io/">Vasu Vikram</a>, <a href="https://aoli.al">Ao Li</a>, <a href="https://rohan.padhye.org/">Rohan Padhye</a></div>
                 <div style="margin-top: 4px;">February 13, 2026 • 10 min read</div>
             </div>
 
@@ -320,8 +320,17 @@
             </ul>
 
             <p>
-                Each model was tested on 39 Java concurrency bugs from our dataset, which includes tasks that Fray was previously
-                evaluated on. This includes 28 single-class programs from SCTBench [3], and 11 bugs from the open source Apache Kafka project. 
+                Each model was tested on 39 Java concurrency bugs from our dataset, separated into two groups:
+            </p>
+            <ul style="margin-left: 32px; margin-bottom: 20px;">
+                <li><strong>Spaghetti-Easy (28 programs):</strong> Collected from SCTBench [3], each program is a
+                single file of roughly 100–200 lines of code. These are self-contained concurrency puzzles
+                that isolate specific bug patterns.</li>
+                <li><strong>Spaghetti-Hard (11 programs):</strong> Concurrency bugs collected from the open-source
+                Apache Kafka project. These are real-world bugs embedded in a large, complex codebase,
+                making them significantly more challenging to diagnose and fix.</li>
+            </ul>
+            <p>
                 All of these bugs have the property that running the tests thousands of times would not
                 reliably trigger the bug—the race conditions are too subtle and dependent on specific thread interleavings. However,
                 Fray consistently finds these bugs within seconds.
@@ -359,7 +368,7 @@ done</code></pre>
             <p>
                 The logic is intuitive: if the test passes 10, 20, or even 100 times in a row, the fix must be correct.
                 Unfortunately, <span class="highlight">this approach gives a false sense of confidence</span>. The tests
-                might pass simply because the problematic thread interleaving never occurred during those runs. This often results in the agent 
+                might pass simply because the problematic thread interleaving never occurred during those runs. This often results in the agent
                 finishing after its first proposed solution, as it assumes that the fix is correct from the test results.
             </p>
 
@@ -429,7 +438,7 @@ AssertionError at WorkStealQueue$ObjType.check</code></pre>
             </ul>
 
             <p>
-                On this patch, Fray verification passed 100,000 iterations with no errors. By providing a stronger verification 
+                On this patch, Fray verification passed 100,000 iterations with no errors. By providing a stronger verification
                 as a tool, the agent is able to propose more complex patches, rather than defaulting to the first and often laziest one.
             </p>
 
@@ -534,7 +543,7 @@ private void addToRestoredTasks(final StreamTask task) {
             <p>
                 The real issue was that <code>updatingTasks.remove()</code> was called <em>outside</em> the lock, creating
                 a race condition. The correct fix moves this single line <em>inside</em> the lock to ensure atomic state
-                transitions. This is a fundamentally different approach from the agent's deduplication strategy. With its current limited tooling, there was no way to know the fix was insufficient. This suggests agents need better tooling and 
+                transitions. This is a fundamentally different approach from the agent's deduplication strategy. With its current limited tooling, there was no way to know the fix was insufficient. This suggests agents need better tooling and
                 reasoning to properly diagnose the root cause of these real-world concurrency issues.
             </p>
 
@@ -542,13 +551,13 @@ private void addToRestoredTasks(final StreamTask task) {
 
             <p>
                 We evaluated multiple state-of-the-art models on 39 concurrency bug tasks, both with and without Fray.
-                The results reveal different patterns for SCTBench versus real-world Kafka bugs.
+                The results reveal different patterns for Spaghetti-Easy versus Spaghetti-Hard.
             </p>
 
-            <h3>SCTBench Performance (28 tasks)</h3>
+            <h3>Spaghetti-Easy Performance (28 tasks)</h3>
 
             <p>
-                On single program benchmarks from SCTBench, Fray provides significant improvements across all models:
+                On the Spaghetti-Easy benchmarks, Fray provides significant improvements across all models:
             </p>
 
             <table class="comparison-table">
@@ -600,10 +609,10 @@ private void addToRestoredTasks(final StreamTask task) {
                 demonstrates this pattern clearly.
             </p>
 
-            <h3>Real-World Kafka Performance (11 tasks)</h3>
+            <h3>Spaghetti-Hard Performance (11 tasks)</h3>
 
             <p>
-                On real-world Apache Kafka bugs, the picture is very different:
+                On the Spaghetti-Hard benchmarks, the picture is very different:
             </p>
 
             <table class="comparison-table">
@@ -688,8 +697,8 @@ private void addToRestoredTasks(final StreamTask task) {
             </p>
             <ul style="margin-left: 32px; margin-bottom: 20px;">
                 <li><strong>Interactively explore thread interleavings:</strong> tools that let agents decide which threads to run
-                  at various breakpoints to understand how race conditions manifest. We have created the <a href="https://plugins.jetbrains.com/plugin/26623-fray-debugger"> Fray Debugger</a>, 
-                for this purpose; identifying the best way to properly expose this to an agent is a promising 
+                  at various breakpoints to understand how race conditions manifest. We have created the <a href="https://plugins.jetbrains.com/plugin/26623-fray-debugger"> Fray Debugger</a>,
+                for this purpose; identifying the best way to properly expose this to an agent is a promising
                 next step. </li>
                 <li><strong>Get targeted feedback:</strong> Rather than just "test failed," diagnostic information about which
                 thread interleaving triggered the failure and what invariant was violated</li>
@@ -723,8 +732,8 @@ private void addToRestoredTasks(final StreamTask task) {
             <p>
                 Concurrency bugs represent a unique challenge for AI coding agents because standard verification
                 approaches—running tests multiple times—are insufficient most of the time. Our evaluation shows that
-                controlled concurrency testing tools like Fray are essential for expanding the scope of software engineering 
-                agent evaluation by providing more reliable verification and refining initial insufficient patches proposed by 
+                controlled concurrency testing tools like Fray are essential for expanding the scope of software engineering
+                agent evaluation by providing more reliable verification and refining initial insufficient patches proposed by
                 agents.
             </p>
 
