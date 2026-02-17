@@ -288,7 +288,7 @@ docker load < result
 ```bibtex
 @misc{spaghettibench2025,
   title={Spaghetti Bench: Evaluating AI Agents on Concurrency Bug Fixes},
-  author={Vikram, Vasu and Li, Ao and Padhye, Rohan},
+  author={Vikram, Vasudev and Li, Ao and Padhye, Rohan},
   year={2025},
   url={https://github.com/cmu-pasta/spaghetti-bench}
 }
