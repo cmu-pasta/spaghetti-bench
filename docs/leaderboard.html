@@ -299,9 +299,9 @@
         </header>
 
         <div class="tabs">
-            <div class="tab active" data-filter="all" onclick="switchCategory('all')">All</div>
+            <div class="tab" data-filter="all" onclick="switchCategory('all')">All</div>
             <div class="tab" data-filter="sctbench" onclick="switchCategory('sctbench')">Spaghetti-Easy</div>
-            <div class="tab" data-filter="real-world" onclick="switchCategory('real-world')">Spaghetti-Hard</div>
+            <div class="tab active" data-filter="real-world" onclick="switchCategory('real-world')">Spaghetti-Hard</div>
         </div>
 
         <div id="content">
@@ -312,7 +312,7 @@
     <script>
         let leaderboardData = null;
         let currentTab = 'overall';
-        let categoryFilter = 'all';  // 'all', 'sctbench', or 'real-world'
+        let categoryFilter = 'real-world';  // 'all', 'sctbench', or 'real-world'
 
         // Load data on page load
         window.addEventListener('DOMContentLoaded', loadData);
